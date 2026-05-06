@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
@@ -24,9 +23,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(0.3);}
 <div id="root"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js" crossorigin></script>
-
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js" crossorigin></script>
-
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
 
 <script type="text/babel" data-presets="react">
@@ -949,56 +946,53 @@ function App(){
         button{font-family:'DM Sans',sans-serif;}
       `}</style>
 
-```
-  <div style={{
-    maxWidth:420, margin:"0 auto", height:"100vh",
-    background:"#000", color:"#fff", fontFamily:"'DM Sans',sans-serif",
-    position:"relative", overflowX:"hidden",
-    display:"flex", flexDirection:"column",
-  }}>
-    {/* Scrollable content area — sits above fixed nav */}
-    <div style={{flex:1, overflowY:"auto", overflowX:"hidden", WebkitOverflowScrolling:"touch"}}>
-      <SwipeScreen onSwipeBack={isSubView ? goBack : null}>
-        {view==="home"&&<HomeView workouts={workouts} bodyWeights={bodyWeights} calories={calories}
-          onStart={id=>{setLogTypeId(id);setEditingW(null);setView("log");}}
-          onLogWeight={()=>setModal("weight")} onLogCalories={()=>setModal("calories")}/>}
-        {view==="log"&&logTypeId&&<LogWorkout typeId={logTypeId} onSave={handleSave} onBack={goBack} initialData={editingW} customEx={customEx}/>}
-        {view==="log_list"&&<LogView workouts={workouts} onEdit={handleEdit} onDelete={handleDelete}/>}
-        {view==="progress"&&<ProgressView workouts={workouts} bodyWeights={bodyWeights} calories={calories}/>}
-      </SwipeScreen>
-    </div>
+      <div style={{
+        maxWidth:420, margin:"0 auto", height:"100vh",
+        background:"#000", color:"#fff", fontFamily:"'DM Sans',sans-serif",
+        position:"relative", overflowX:"hidden",
+        display:"flex", flexDirection:"column",
+      }}>
+        {/* Scrollable content area — sits above fixed nav */}
+        <div style={{flex:1, overflowY:"auto", overflowX:"hidden", WebkitOverflowScrolling:"touch"}}>
+          <SwipeScreen onSwipeBack={isSubView ? goBack : null}>
+            {view==="home"&&<HomeView workouts={workouts} bodyWeights={bodyWeights} calories={calories}
+              onStart={id=>{setLogTypeId(id);setEditingW(null);setView("log");}}
+              onLogWeight={()=>setModal("weight")} onLogCalories={()=>setModal("calories")}/>}
+            {view==="log"&&logTypeId&&<LogWorkout typeId={logTypeId} onSave={handleSave} onBack={goBack} initialData={editingW} customEx={customEx}/>}
+            {view==="log_list"&&<LogView workouts={workouts} onEdit={handleEdit} onDelete={handleDelete}/>}
+            {view==="progress"&&<ProgressView workouts={workouts} bodyWeights={bodyWeights} calories={calories}/>}
+          </SwipeScreen>
+        </div>
 
-    {/* Nav — fixed to bottom of flex container, never overlaps content */}
-    <div style={{
-      flexShrink:0,
-      background:"rgba(0,0,0,0.97)",
-      backdropFilter:"blur(20px)",
-      borderTop:"1px solid #111",
-      display:"flex", justifyContent:"space-around",
-      padding:"14px 0 32px",
-    }}>
-      {NAV.map(t=>(
-        <button key={t.id} onClick={()=>setView(t.id)}
-          style={{background:"none",border:"none",cursor:"pointer",fontFamily:"'DM Sans',sans-serif",fontSize:12,letterSpacing:"0.08em",color:view===t.id?"#fff":"#333",padding:"4px 16px",borderRadius:20,transition:"color 0.2s"}}>
-          {view===t.id&&<span style={{color:"#D4FF00",marginRight:4}}>✦ </span>}{t.label}
-        </button>
-      ))}
-    </div>
+        {/* Nav — fixed to bottom of flex container, never overlaps content */}
+        <div style={{
+          flexShrink:0,
+          background:"rgba(0,0,0,0.97)",
+          backdropFilter:"blur(20px)",
+          borderTop:"1px solid #111",
+          display:"flex", justifyContent:"space-around",
+          padding:"14px 0 32px",
+        }}>
+          {NAV.map(t=>(
+            <button key={t.id} onClick={()=>setView(t.id)}
+              style={{background:"none",border:"none",cursor:"pointer",fontFamily:"'DM Sans',sans-serif",fontSize:12,letterSpacing:"0.08em",color:view===t.id?"#fff":"#333",padding:"4px 16px",borderRadius:20,transition:"color 0.2s"}}>
+              {view===t.id&&<span style={{color:"#D4FF00",marginRight:4}}>✦ </span>}{t.label}
+            </button>
+          ))}
+        </div>
 
-    {modal==="weight"&&<WeightSheet latest={[...bodyWeights].sort((a,b)=>b.date.localeCompare(a.date))[0]} onSave={w=>{setBodyWeights(p=>[...p,{date:today(),weight:w}]);setModal(null);}} onClose={()=>setModal(null)}/>}
-    {modal==="calories"&&<CalSheet current={calories[today()]} onSave={c=>{setCalories(p=>({...p,[today()]:c}));setModal(null);}} onClose={()=>setModal(null)}/>}
-  </div>
-</>
-```
-
-);
+        {modal==="weight"&&<WeightSheet latest={[...bodyWeights].sort((a,b)=>b.date.localeCompare(a.date))[0]} onSave={w=>{setBodyWeights(p=>[...p,{date:today(),weight:w}]);setModal(null);}} onClose={()=>setModal(null)}/>}
+        {modal==="calories"&&<CalSheet current={calories[today()]} onSave={c=>{setCalories(p=>({...p,[today()]:c}));setModal(null);}} onClose={()=>setModal(null)}/>}
+      </div>
+    </>
+  );
 }
 
-const container = document.getElementById(“root”);
+
+const container = document.getElementById("root");
 const root = ReactDOM.createRoot(container);
 root.render(React.createElement(App));
-document.getElementById(“loading”).style.display = “none”;
+document.getElementById("loading").style.display = "none";
 </script>
-
 </body>
 </html>
