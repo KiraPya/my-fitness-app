@@ -9,144 +9,148 @@
 <title>train.</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
-html,body{background:#000;height:100%;overflow:hidden;}
-#root{height:100%;}
+html,body{background:#000;height:100%;width:100%;}
+#root{height:100%;width:100%;}
+#loading{position:fixed;inset:0;background:#000;display:flex;align-items:center;justify-content:center;color:#D4FF00;font-family:sans-serif;font-size:14px;letter-spacing:0.1em;}
 input{outline:none;}
 input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(0.3);}
 ::-webkit-scrollbar{width:0;}
-button{font-family:'DM Sans',sans-serif;}
 </style>
 </head>
 <body>
+<div id="loading">loading...</div>
 <div id="root"></div>
-<script type="text/babel">
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js" crossorigin></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js" crossorigin></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+
+<script type="text/babel" data-presets="react">
 const { useState, useEffect, useCallback, useRef } = React;
 
 // ─── Data ───────────────────────────────────────────────────────────────────────
 
 const QUOTES = [
-“the body achieves what the mind believes.”,
-“progress, not perfection.”,
-“one more rep. one more day.”,
-“strong is built, not born.”,
-“show up. that’s already half the work.”,
-“your only competition is yesterday’s you.”,
-“consistency beats intensity every time.”,
-“every session is a deposit into your future self.”,
-“rest when you’re done, not when you’re tired.”,
-“small steps daily. big results eventually.”,
-“trust the process — results follow effort.”,
-“your future self is watching. make her proud.”,
+  "the body achieves what the mind believes.",
+  "progress, not perfection.",
+  "one more rep. one more day.",
+  "strong is built, not born.",
+  "show up. that's already half the work.",
+  "your only competition is yesterday's you.",
+  "consistency beats intensity every time.",
+  "every session is a deposit into your future self.",
+  "rest when you're done, not when you're tired.",
+  "small steps daily. big results eventually.",
+  "trust the process — results follow effort.",
+  "your future self is watching. make her proud.",
 ];
 
 const WORKOUT_TYPES = [
-{ id:“legs1”,  label:“legs day 1”,        sub:“glutes + posterior”, gradient:“radial-gradient(ellipse at 30% 40%, #c9a882 0%, #8b7355 30%, #4a3728 60%, #1a0e08 100%)” },
-{ id:“legs2”,  label:“legs day 2”,        sub:“glutes + quads”,     gradient:“radial-gradient(ellipse at 70% 30%, #e8c49a 0%, #c49b6e 35%, #7a5a3a 65%, #1a1008 100%)” },
-{ id:“back”,   label:“back”,              sub:“pull day”,           gradient:“radial-gradient(ellipse at 40% 60%, #7ab8c8 0%, #4a8fa8 35%, #1a4a5a 65%, #081018 100%)” },
-{ id:“chest”,  label:“chest & shoulders”, sub:“push day”,           gradient:“radial-gradient(ellipse at 60% 40%, #a88fc8 0%, #7a5aa0 35%, #3a1a5a 65%, #100818 100%)” },
-{ id:“mixed”,  label:“mixed”,             sub:“back + legs”,        gradient:“radial-gradient(ellipse at 50% 50%, #c88a7a 0%, #a06050 35%, #501a18 65%, #180808 100%)” },
-{ id:“cardio”, label:“cardio / padel”,    sub:“activity”,           gradient:“radial-gradient(ellipse at 30% 70%, #7ac8a8 0%, #4aa080 35%, #1a5040 65%, #081810 100%)” },
+  { id:"legs1",  label:"legs day 1",        sub:"glutes + posterior", gradient:"radial-gradient(ellipse at 30% 40%, #c9a882 0%, #8b7355 30%, #4a3728 60%, #1a0e08 100%)" },
+  { id:"legs2",  label:"legs day 2",        sub:"glutes + quads",     gradient:"radial-gradient(ellipse at 70% 30%, #e8c49a 0%, #c49b6e 35%, #7a5a3a 65%, #1a1008 100%)" },
+  { id:"back",   label:"back",              sub:"pull day",           gradient:"radial-gradient(ellipse at 40% 60%, #7ab8c8 0%, #4a8fa8 35%, #1a4a5a 65%, #081018 100%)" },
+  { id:"chest",  label:"chest & shoulders", sub:"push day",           gradient:"radial-gradient(ellipse at 60% 40%, #a88fc8 0%, #7a5aa0 35%, #3a1a5a 65%, #100818 100%)" },
+  { id:"mixed",  label:"mixed",             sub:"back + legs",        gradient:"radial-gradient(ellipse at 50% 50%, #c88a7a 0%, #a06050 35%, #501a18 65%, #180808 100%)" },
+  { id:"cardio", label:"cardio / padel",    sub:"activity",           gradient:"radial-gradient(ellipse at 30% 70%, #7ac8a8 0%, #4aa080 35%, #1a5040 65%, #081810 100%)" },
 ];
 
 const DEFAULT_EXERCISES = {
-legs1: [“Back Extension”,“DB Squats”,“Bulgarian Split Squats”,“Deadlifts”,“Abductors”,“Adductors”,“Calves”],
-legs2: [“Back Extension”,“Hip Thrust”,“Walking Lunges”,“Rear-Foot Elevated Split Squat”,“Leg Extension”,“Abductors”],
-back:  [“Lat Pulldown”,“Seated Cable Row”,“Straight Arm Pulldown”,“Reverse Pec Deck”,“Supported Pull-Ups”,“Bicep Curls”],
-chest: [“Chest Press”,“Incline / ISO Press”,“Pec Deck”,“Shoulder Press”,“Lateral Raises”,“Triceps”],
-mixed: [“Lat Pulldown”,“Seated Cable Row”,“Hip Thrust”,“Leg Extension”,“Abductors”],
-cardio:[],
+  legs1: ["Back Extension","DB Squats","Bulgarian Split Squats","Deadlifts","Abductors","Adductors","Calves"],
+  legs2: ["Back Extension","Hip Thrust","Walking Lunges","Rear-Foot Elevated Split Squat","Leg Extension","Abductors"],
+  back:  ["Lat Pulldown","Seated Cable Row","Straight Arm Pulldown","Reverse Pec Deck","Supported Pull-Ups","Bicep Curls"],
+  chest: ["Chest Press","Incline / ISO Press","Pec Deck","Shoulder Press","Lateral Raises","Triceps"],
+  mixed: ["Lat Pulldown","Seated Cable Row","Hip Thrust","Leg Extension","Abductors"],
+  cardio:[],
 };
 const DEFAULT_WEIGHTS = {
-“Back Extension”:0,“DB Squats”:12,“Bulgarian Split Squats”:10,“Deadlifts”:20,
-“Abductors”:45,“Adductors”:45,“Calves”:0,“Hip Thrust”:30,“Walking Lunges”:0,
-“Rear-Foot Elevated Split Squat”:5,“Leg Extension”:50,“Lat Pulldown”:27.5,
-“Seated Cable Row”:27.5,“Straight Arm Pulldown”:12.5,“Reverse Pec Deck”:14.5,
-“Supported Pull-Ups”:35,“Bicep Curls”:5,“Chest Press”:19,“Incline / ISO Press”:15,
-“Pec Deck”:17,“Shoulder Press”:15,“Lateral Raises”:4,“Triceps”:8,
+  "Back Extension":0,"DB Squats":12,"Bulgarian Split Squats":10,"Deadlifts":20,
+  "Abductors":45,"Adductors":45,"Calves":0,"Hip Thrust":30,"Walking Lunges":0,
+  "Rear-Foot Elevated Split Squat":5,"Leg Extension":50,"Lat Pulldown":27.5,
+  "Seated Cable Row":27.5,"Straight Arm Pulldown":12.5,"Reverse Pec Deck":14.5,
+  "Supported Pull-Ups":35,"Bicep Curls":5,"Chest Press":19,"Incline / ISO Press":15,
+  "Pec Deck":17,"Shoulder Press":15,"Lateral Raises":4,"Triceps":8,
 };
 
-const TAGS        = [“strong day”,“low energy”,“cycle phase”,“heavy”,“light”,“recovery”];
-const INTENSITIES = [“low”,“medium”,“high”];
+const TAGS        = ["strong day","low energy","cycle phase","heavy","light","recovery"];
+const INTENSITIES = ["low","medium","high"];
 const CAL_TARGET  = 1700;
 
 // ─── Storage ────────────────────────────────────────────────────────────────────
 
-const S   = { get:k=>{try{return JSON.parse(localStorage.getItem(k)||“null”)}catch{return null}}, set:(k,v)=>localStorage.setItem(k,JSON.stringify(v)) };
-const loadW  = ()=>S.get(“ftv5_w”)||[];
-const loadBW = ()=>S.get(“ftv5_bw”)||[];
-const loadCal= ()=>S.get(“ftv5_cal”)||{};
-const loadEx = ()=>S.get(“ftv5_ex”)||{};
+const S   = { get:k=>{try{return JSON.parse(localStorage.getItem(k)||"null")}catch{return null}}, set:(k,v)=>localStorage.setItem(k,JSON.stringify(v)) };
+const loadW  = ()=>S.get("ftv5_w")||[];
+const loadBW = ()=>S.get("ftv5_bw")||[];
+const loadCal= ()=>S.get("ftv5_cal")||{};
+const loadEx = ()=>S.get("ftv5_ex")||{};
 
 // ─── Utils ──────────────────────────────────────────────────────────────────────
 
-const today   = ()=>new Date().toISOString().split(“T”)[0];
-const fmtDate = iso=>new Date(iso+“T12:00:00”).toLocaleDateString(“en-GB”,{weekday:“short”,day:“numeric”,month:“short”});
-const fmtShort= iso=>new Date(iso+“T12:00:00”).toLocaleDateString(“en-GB”,{day:“numeric”,month:“short”});
-const fmtDay  = iso=>new Date(iso+“T12:00:00”).toLocaleDateString(“en-GB”,{day:“numeric”});
-const fmtMon  = iso=>new Date(iso+“T12:00:00”).toLocaleDateString(“en-GB”,{month:“short”});
-const getWeek = iso=>{const d=new Date(iso+“T12:00:00”);const day=d.getDay()||7;d.setDate(d.getDate()+4-day);const y=new Date(d.getFullYear(),0,1);return d.getFullYear()+”-W”+Math.ceil(((d-y)/86400000+1)/7).toString().padStart(2,“0”)};
+const today   = ()=>new Date().toISOString().split("T")[0];
+const fmtDate = iso=>new Date(iso+"T12:00:00").toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"});
+const fmtShort= iso=>new Date(iso+"T12:00:00").toLocaleDateString("en-GB",{day:"numeric",month:"short"});
+const fmtDay  = iso=>new Date(iso+"T12:00:00").toLocaleDateString("en-GB",{day:"numeric"});
+const fmtMon  = iso=>new Date(iso+"T12:00:00").toLocaleDateString("en-GB",{month:"short"});
+const getWeek = iso=>{const d=new Date(iso+"T12:00:00");const day=d.getDay()||7;d.setDate(d.getDate()+4-day);const y=new Date(d.getFullYear(),0,1);return d.getFullYear()+"-W"+Math.ceil(((d-y)/86400000+1)/7).toString().padStart(2,"0")};
 const getType = id=>WORKOUT_TYPES.find(w=>w.id===id)||WORKOUT_TYPES[0];
 const getQuote= ()=>{const n=Math.floor((new Date()-new Date(new Date().getFullYear(),0,0))/86400000);return QUOTES[n%QUOTES.length]};
 
 // ─── Flat lime SVG illustrations (Pillowtalk-style symmetric organic shapes) ────
 
 // Minimal flat panther — side profile, crouching, looking forward
-const IllustrationA = ({color=”#D4FF00”, size=200}) => (
-<svg width={size} height={size} viewBox="0 0 200 200" fill="none">
-{/* Body — long low crouching shape */}
-<path d="M30,130 C30,115 38,105 55,100 C65,96 80,94 100,95 C125,95 148,98 162,108 C172,115 175,125 170,135 C165,145 152,148 135,146 C118,144 80,144 60,144 C42,144 30,142 30,130 Z" fill={color}/>
-{/* Head */}
-<path d="M148,100 C148,85 155,72 165,68 C172,65 178,70 178,80 C178,92 170,102 160,105 C153,107 148,104 148,100 Z" fill={color}/>
-{/* Ear left */}
-<path d="M155,70 C156,60 162,54 168,56 C165,64 161,68 155,70 Z" fill={color}/>
-{/* Ear right */}
-<path d="M168,65 C170,56 176,52 180,55 C177,62 173,67 168,65 Z" fill={color}/>
-{/* Snout */}
-<path d="M175,82 C180,82 184,85 184,88 C184,91 181,93 178,92 C175,91 173,88 175,82 Z" fill={color}/>
-{/* Eye — negative space */}
-<ellipse cx="168" cy="78" rx="4" ry="3.5" fill="#000"/>
-{/* Nostril */}
-<circle cx="181" cy="89" r="1.5" fill="#000"/>
-{/* Front legs */}
-<path d="M60,143 L56,165 C56,168 59,170 62,168 L66,165 L68,143 Z" fill={color}/>
-<path d="M80,143 L78,165 C78,168 81,170 84,168 L87,165 L88,143 Z" fill={color}/>
-{/* Back legs */}
-<path d="M120,143 L116,165 C116,168 119,170 122,168 L126,165 L128,143 Z" fill={color}/>
-<path d="M138,143 L136,165 C136,168 139,170 142,168 L145,165 L146,143 Z" fill={color}/>
-{/* Tail — long curving */}
-<path d="M32,128 C20,120 10,108 12,96 C14,86 22,82 28,88 C22,95 24,105 32,112" stroke={color} strokeWidth="7" fill="none" strokeLinecap="round"/>
-<path d="M12,96 C8,86 12,76 18,72" stroke={color} strokeWidth="5" fill="none" strokeLinecap="round"/>
-{/* Stripe marks — minimal */}
-<path d="M95,96 L93,143" stroke="#000" strokeWidth="2.5" strokeLinecap="round" opacity="0.35"/>
-<path d="M110,95 L108,143" stroke="#000" strokeWidth="2.5" strokeLinecap="round" opacity="0.35"/>
-<path d="M125,96 L124,143" stroke="#000" strokeWidth="2" strokeLinecap="round" opacity="0.25"/>
-</svg>
+const IllustrationA = ({color="#D4FF00", size=200}) => (
+  <svg width={size} height={size} viewBox="0 0 200 200" fill="none">
+    {/* Body — long low crouching shape */}
+    <path d="M30,130 C30,115 38,105 55,100 C65,96 80,94 100,95 C125,95 148,98 162,108 C172,115 175,125 170,135 C165,145 152,148 135,146 C118,144 80,144 60,144 C42,144 30,142 30,130 Z" fill={color}/>
+    {/* Head */}
+    <path d="M148,100 C148,85 155,72 165,68 C172,65 178,70 178,80 C178,92 170,102 160,105 C153,107 148,104 148,100 Z" fill={color}/>
+    {/* Ear left */}
+    <path d="M155,70 C156,60 162,54 168,56 C165,64 161,68 155,70 Z" fill={color}/>
+    {/* Ear right */}
+    <path d="M168,65 C170,56 176,52 180,55 C177,62 173,67 168,65 Z" fill={color}/>
+    {/* Snout */}
+    <path d="M175,82 C180,82 184,85 184,88 C184,91 181,93 178,92 C175,91 173,88 175,82 Z" fill={color}/>
+    {/* Eye — negative space */}
+    <ellipse cx="168" cy="78" rx="4" ry="3.5" fill="#000"/>
+    {/* Nostril */}
+    <circle cx="181" cy="89" r="1.5" fill="#000"/>
+    {/* Front legs */}
+    <path d="M60,143 L56,165 C56,168 59,170 62,168 L66,165 L68,143 Z" fill={color}/>
+    <path d="M80,143 L78,165 C78,168 81,170 84,168 L87,165 L88,143 Z" fill={color}/>
+    {/* Back legs */}
+    <path d="M120,143 L116,165 C116,168 119,170 122,168 L126,165 L128,143 Z" fill={color}/>
+    <path d="M138,143 L136,165 C136,168 139,170 142,168 L145,165 L146,143 Z" fill={color}/>
+    {/* Tail — long curving */}
+    <path d="M32,128 C20,120 10,108 12,96 C14,86 22,82 28,88 C22,95 24,105 32,112" stroke={color} strokeWidth="7" fill="none" strokeLinecap="round"/>
+    <path d="M12,96 C8,86 12,76 18,72" stroke={color} strokeWidth="5" fill="none" strokeLinecap="round"/>
+    {/* Stripe marks — minimal */}
+    <path d="M95,96 L93,143" stroke="#000" strokeWidth="2.5" strokeLinecap="round" opacity="0.35"/>
+    <path d="M110,95 L108,143" stroke="#000" strokeWidth="2.5" strokeLinecap="round" opacity="0.35"/>
+    <path d="M125,96 L124,143" stroke="#000" strokeWidth="2" strokeLinecap="round" opacity="0.25"/>
+  </svg>
 );
 
-const IllustrationB = ({color=”#D4FF00”, size=180}) => (
-<svg width={size} height={size} viewBox="0 0 200 200" fill="none">
-{/* Star sparkle */}
-<path d="M100,20 L106,88 L174,94 L106,100 L100,168 L94,100 L26,94 L94,88 Z" fill={color}/>
-</svg>
+const IllustrationB = ({color="#D4FF00", size=180}) => (
+  <svg width={size} height={size} viewBox="0 0 200 200" fill="none">
+    {/* Star sparkle */}
+    <path d="M100,20 L106,88 L174,94 L106,100 L100,168 L94,100 L26,94 L94,88 Z" fill={color}/>
+  </svg>
 );
 
-const IllustrationC = ({color=”#D4FF00”, size=200}) => (
-<svg width={size} height={size} viewBox="0 0 200 200" fill="none">
-{/* Mushroom/plant organic shape */}
-<path d="M100,160 L100,105" stroke={color} strokeWidth="8" strokeLinecap="round"/>
-<path d="M100,105 C100,65 60,45 50,65 C42,80 55,95 70,90 C55,105 45,115 50,130 C55,142 70,140 80,130 C75,145 78,158 88,160 L112,160 C122,158 125,145 120,130 C130,140 145,142 150,130 C155,115 145,105 130,90 C145,95 158,80 150,65 C140,45 100,65 100,105Z" fill={color}/>
-</svg>
+const IllustrationC = ({color="#D4FF00", size=200}) => (
+  <svg width={size} height={size} viewBox="0 0 200 200" fill="none">
+    {/* Mushroom/plant organic shape */}
+    <path d="M100,160 L100,105" stroke={color} strokeWidth="8" strokeLinecap="round"/>
+    <path d="M100,105 C100,65 60,45 50,65 C42,80 55,95 70,90 C55,105 45,115 50,130 C55,142 70,140 80,130 C75,145 78,158 88,160 L112,160 C122,158 125,145 120,130 C130,140 145,142 150,130 C155,115 145,105 130,90 C145,95 158,80 150,65 C140,45 100,65 100,105Z" fill={color}/>
+  </svg>
 );
 
 // ─── Blurry gradient card (the key Pillowtalk visual) ───────────────────────────
 
 const GradientCard = ({ gradient, children, style = {}, height = 160, onClick }) => (
-
   <div onClick={onClick} style={{
     position: "relative",
     borderRadius: 20,
@@ -170,784 +174,780 @@ const GradientCard = ({ gradient, children, style = {}, height = 160, onClick })
 
 // ─── Micro UI ───────────────────────────────────────────────────────────────────
 
-const Chip = ({label,active,onClick,color=”#D4FF00”})=>(
-<button onClick={onClick} style={{padding:“5px 12px”,borderRadius:40,fontSize:12,cursor:“pointer”,border:`1px solid ${active?color:"#2a2a2a"}`,background:active?color+“18”:“transparent”,color:active?color:”#555”,fontFamily:“inherit”,transition:“all 0.15s”}}>{label}</button>
+const Chip = ({label,active,onClick,color="#D4FF00"})=>(
+  <button onClick={onClick} style={{padding:"5px 12px",borderRadius:40,fontSize:12,cursor:"pointer",border:`1px solid ${active?color:"#2a2a2a"}`,background:active?color+"18":"transparent",color:active?color:"#555",fontFamily:"inherit",transition:"all 0.15s"}}>{label}</button>
 );
 
 function NumInput({value,onChange,step=0.5,min=0,label}){
-const [editing,setEditing]=useState(false);
-const [raw,setRaw]=useState(String(value));
-const ref=useRef();
-useEffect(()=>{if(!editing)setRaw(String(value));},[value,editing]);
-const commit=()=>{const n=parseFloat(raw);if(!isNaN(n)&&n>=min)onChange(+n.toFixed(2));else setRaw(String(value));setEditing(false);};
-return(
-<div style={{display:“flex”,flexDirection:“column”,gap:6,flex:1}}>
-{label&&<span style={{fontSize:10,color:”#555”,letterSpacing:“0.1em”,textTransform:“uppercase”}}>{label}</span>}
-<div style={{display:“flex”,alignItems:“center”,background:”#111”,borderRadius:10,border:`1px solid #222`,overflow:“hidden”}}>
-<button onClick={()=>{const v=Math.max(min,+(value-step).toFixed(2));onChange(v);setRaw(String(v));}} style={{padding:“10px 12px”,background:“none”,border:“none”,color:”#555”,fontSize:18,cursor:“pointer”,lineHeight:1,fontFamily:“inherit”}}>−</button>
-{editing
-?<input ref={ref} value={raw} onChange={e=>setRaw(e.target.value)} onBlur={commit} onKeyDown={e=>e.key===“Enter”&&commit()} style={{flex:1,textAlign:“center”,background:“none”,border:“none”,color:”#fff”,fontSize:16,outline:“none”,width:0,fontFamily:“inherit”}} inputMode=“decimal”/>
-:<span onClick={()=>{setEditing(true);setRaw(String(value));setTimeout(()=>ref.current?.select(),50);}} style={{flex:1,textAlign:“center”,color:”#fff”,fontSize:16,cursor:“text”,padding:“10px 0”,fontFamily:“inherit”}}>{value}</span>
-}
-<button onClick={()=>{const v=+(value+step).toFixed(2);onChange(v);setRaw(String(v));}} style={{padding:“10px 12px”,background:“none”,border:“none”,color:”#555”,fontSize:18,cursor:“pointer”,lineHeight:1,fontFamily:“inherit”}}>+</button>
-</div>
-</div>
-);
+  const [editing,setEditing]=useState(false);
+  const [raw,setRaw]=useState(String(value));
+  const ref=useRef();
+  useEffect(()=>{if(!editing)setRaw(String(value));},[value,editing]);
+  const commit=()=>{const n=parseFloat(raw);if(!isNaN(n)&&n>=min)onChange(+n.toFixed(2));else setRaw(String(value));setEditing(false);};
+  return(
+    <div style={{display:"flex",flexDirection:"column",gap:6,flex:1}}>
+      {label&&<span style={{fontSize:10,color:"#555",letterSpacing:"0.1em",textTransform:"uppercase"}}>{label}</span>}
+      <div style={{display:"flex",alignItems:"center",background:"#111",borderRadius:10,border:`1px solid #222`,overflow:"hidden"}}>
+        <button onClick={()=>{const v=Math.max(min,+(value-step).toFixed(2));onChange(v);setRaw(String(v));}} style={{padding:"10px 12px",background:"none",border:"none",color:"#555",fontSize:18,cursor:"pointer",lineHeight:1,fontFamily:"inherit"}}>−</button>
+        {editing
+          ?<input ref={ref} value={raw} onChange={e=>setRaw(e.target.value)} onBlur={commit} onKeyDown={e=>e.key==="Enter"&&commit()} style={{flex:1,textAlign:"center",background:"none",border:"none",color:"#fff",fontSize:16,outline:"none",width:0,fontFamily:"inherit"}} inputMode="decimal"/>
+          :<span onClick={()=>{setEditing(true);setRaw(String(value));setTimeout(()=>ref.current?.select(),50);}} style={{flex:1,textAlign:"center",color:"#fff",fontSize:16,cursor:"text",padding:"10px 0",fontFamily:"inherit"}}>{value}</span>
+        }
+        <button onClick={()=>{const v=+(value+step).toFixed(2);onChange(v);setRaw(String(v));}} style={{padding:"10px 12px",background:"none",border:"none",color:"#555",fontSize:18,cursor:"pointer",lineHeight:1,fontFamily:"inherit"}}>+</button>
+      </div>
+    </div>
+  );
 }
 
 function ExerciseRow({exercise,onChange,onRemove,typeGradient,allEx}){
-const [open,setOpen]=useState(false);
-const [showSug,setShowSug]=useState(false);
-const filtered=allEx.filter(e=>e.toLowerCase().includes((exercise.name||””).toLowerCase())&&e!==exercise.name).slice(0,4);
-const dotColor=”#D4FF00”;
-return(
-<div style={{borderRadius:14,border:`1px solid ${open?"#2a2a2a":"#1a1a1a"}`,background:”#0d0d0d”,marginBottom:8,position:“relative”,overflow:“visible”}}>
-<div onClick={()=>setOpen(!open)} style={{padding:“13px 15px”,display:“flex”,alignItems:“center”,gap:10,cursor:“pointer”}}>
-<div style={{width:5,height:5,borderRadius:“50%”,background:dotColor,flexShrink:0}}/>
-<span style={{flex:1,fontSize:14,color:exercise.name?”#e0e0e0”:”#444”}}>{exercise.name||“exercise name”}</span>
-<span style={{fontSize:11,color:”#444”}}>{exercise.weight>0?exercise.weight+“kg”:“bw”} · {exercise.sets}×{exercise.reps}</span>
-<span style={{color:”#333”,fontSize:11,marginLeft:4}}>{open?“▴”:“▾”}</span>
-</div>
-{open&&(
-<div style={{padding:“0 15px 15px”,display:“flex”,flexDirection:“column”,gap:12}}>
-<div style={{position:“relative”}}>
-<input value={exercise.name} onChange={e=>{onChange({…exercise,name:e.target.value});setShowSug(true);}} onFocus={()=>setShowSug(true)} onBlur={()=>setTimeout(()=>setShowSug(false),150)} placeholder=“exercise name”
-style={{background:”#111”,border:“1px solid #222”,borderRadius:10,padding:“10px 13px”,color:”#e0e0e0”,fontSize:14,width:“100%”,outline:“none”,fontFamily:“inherit”}}/>
-{showSug&&filtered.length>0&&(
-<div style={{position:“absolute”,top:“calc(100% + 4px)”,left:0,right:0,background:”#111”,border:“1px solid #222”,borderRadius:10,zIndex:20}}>
-{filtered.map(s=><div key={s} onClick={()=>{onChange({…exercise,name:s,weight:DEFAULT_WEIGHTS[s]??exercise.weight});setShowSug(false);}} style={{padding:“10px 13px”,color:”#aaa”,fontSize:13,cursor:“pointer”,borderBottom:“1px solid #1a1a1a”}}>{s}</div>)}
-</div>
-)}
-</div>
-<div style={{display:“flex”,gap:8}}>
-<NumInput label=“kg” value={exercise.weight} step={0.5} onChange={v=>onChange({…exercise,weight:v})}/>
-<NumInput label=“sets” value={exercise.sets} step={1} min={1} onChange={v=>onChange({…exercise,sets:v})}/>
-<NumInput label=“reps” value={exercise.reps} step={1} min={1} onChange={v=>onChange({…exercise,reps:v})}/>
-</div>
-<input value={exercise.notes||””} onChange={e=>onChange({…exercise,notes:e.target.value})} placeholder=“notes (optional)”
-style={{background:”#111”,border:“1px solid #222”,borderRadius:10,padding:“10px 13px”,color:”#e0e0e0”,fontSize:13,width:“100%”,outline:“none”,fontFamily:“inherit”}}/>
-<button onClick={onRemove} style={{background:“none”,border:“none”,color:”#ff4444”,fontSize:12,cursor:“pointer”,textAlign:“left”,padding:0,fontFamily:“inherit”}}>remove</button>
-</div>
-)}
-</div>
-);
+  const [open,setOpen]=useState(false);
+  const [showSug,setShowSug]=useState(false);
+  const filtered=allEx.filter(e=>e.toLowerCase().includes((exercise.name||"").toLowerCase())&&e!==exercise.name).slice(0,4);
+  const dotColor="#D4FF00";
+  return(
+    <div style={{borderRadius:14,border:`1px solid ${open?"#2a2a2a":"#1a1a1a"}`,background:"#0d0d0d",marginBottom:8,position:"relative",overflow:"visible"}}>
+      <div onClick={()=>setOpen(!open)} style={{padding:"13px 15px",display:"flex",alignItems:"center",gap:10,cursor:"pointer"}}>
+        <div style={{width:5,height:5,borderRadius:"50%",background:dotColor,flexShrink:0}}/>
+        <span style={{flex:1,fontSize:14,color:exercise.name?"#e0e0e0":"#444"}}>{exercise.name||"exercise name"}</span>
+        <span style={{fontSize:11,color:"#444"}}>{exercise.weight>0?exercise.weight+"kg":"bw"} · {exercise.sets}×{exercise.reps}</span>
+        <span style={{color:"#333",fontSize:11,marginLeft:4}}>{open?"▴":"▾"}</span>
+      </div>
+      {open&&(
+        <div style={{padding:"0 15px 15px",display:"flex",flexDirection:"column",gap:12}}>
+          <div style={{position:"relative"}}>
+            <input value={exercise.name} onChange={e=>{onChange({...exercise,name:e.target.value});setShowSug(true);}} onFocus={()=>setShowSug(true)} onBlur={()=>setTimeout(()=>setShowSug(false),150)} placeholder="exercise name"
+              style={{background:"#111",border:"1px solid #222",borderRadius:10,padding:"10px 13px",color:"#e0e0e0",fontSize:14,width:"100%",outline:"none",fontFamily:"inherit"}}/>
+            {showSug&&filtered.length>0&&(
+              <div style={{position:"absolute",top:"calc(100% + 4px)",left:0,right:0,background:"#111",border:"1px solid #222",borderRadius:10,zIndex:20}}>
+                {filtered.map(s=><div key={s} onClick={()=>{onChange({...exercise,name:s,weight:DEFAULT_WEIGHTS[s]??exercise.weight});setShowSug(false);}} style={{padding:"10px 13px",color:"#aaa",fontSize:13,cursor:"pointer",borderBottom:"1px solid #1a1a1a"}}>{s}</div>)}
+              </div>
+            )}
+          </div>
+          <div style={{display:"flex",gap:8}}>
+            <NumInput label="kg" value={exercise.weight} step={0.5} onChange={v=>onChange({...exercise,weight:v})}/>
+            <NumInput label="sets" value={exercise.sets} step={1} min={1} onChange={v=>onChange({...exercise,sets:v})}/>
+            <NumInput label="reps" value={exercise.reps} step={1} min={1} onChange={v=>onChange({...exercise,reps:v})}/>
+          </div>
+          <input value={exercise.notes||""} onChange={e=>onChange({...exercise,notes:e.target.value})} placeholder="notes (optional)"
+            style={{background:"#111",border:"1px solid #222",borderRadius:10,padding:"10px 13px",color:"#e0e0e0",fontSize:13,width:"100%",outline:"none",fontFamily:"inherit"}}/>
+          <button onClick={onRemove} style={{background:"none",border:"none",color:"#ff4444",fontSize:12,cursor:"pointer",textAlign:"left",padding:0,fontFamily:"inherit"}}>remove</button>
+        </div>
+      )}
+    </div>
+  );
 }
 
 // ─── Home ───────────────────────────────────────────────────────────────────────
 
 function HomeView({workouts,bodyWeights,calories,onStart,onLogWeight,onLogCalories}){
-const thisWeek=getWeek(today());
-const ww=workouts.filter(w=>getWeek(w.date)===thisWeek);
-const hit=ww.length>=3;
-const todayW=workouts.find(w=>w.date===today());
-const latestBW=bodyWeights.length>0?[…bodyWeights].sort((a,b)=>b.date.localeCompare(a.date))[0]:null;
-const todayCal=calories[today()]||null;
-const calPct=todayCal?Math.min(100,Math.round(todayCal/CAL_TARGET*100)):0;
+  const thisWeek=getWeek(today());
+  const ww=workouts.filter(w=>getWeek(w.date)===thisWeek);
+  const hit=ww.length>=3;
+  const todayW=workouts.find(w=>w.date===today());
+  const latestBW=bodyWeights.length>0?[...bodyWeights].sort((a,b)=>b.date.localeCompare(a.date))[0]:null;
+  const todayCal=calories[today()]||null;
+  const calPct=todayCal?Math.min(100,Math.round(todayCal/CAL_TARGET*100)):0;
 
-return(
-<div style={{background:”#000”,minHeight:“100vh”,paddingBottom:100}}>
-{/* Hero — full bleed gradient with illustration */}
-<div style={{position:“relative”,height:320,background:“radial-gradient(ellipse at 60% 40%, #8b7a6a 0%, #5a4535 25%, #2a1a10 55%, #000 85%)”,overflow:“hidden”}}>
-{/* Second light source */}
-<div style={{position:“absolute”,top:0,left:0,right:0,bottom:0,background:“radial-gradient(ellipse at 20% 70%, #6a8b7a 0%, transparent 50%)”,pointerEvents:“none”}}/>
-{/* Illustration */}
-<div style={{position:“absolute”,top:“50%”,left:“50%”,transform:“translate(-50%,-54%)”,opacity:0.9}}>
-<IllustrationA color="#D4FF00" size={200}/>
-</div>
-{/* Text overlay */}
-<div style={{position:“absolute”,bottom:0,left:0,right:0,padding:“0 22px 22px”,background:“linear-gradient(transparent, rgba(0,0,0,0.6))”}}>
-<p style={{fontSize:11,color:“rgba(255,255,255,0.4)”,letterSpacing:“0.12em”,textTransform:“uppercase”,marginBottom:6,fontFamily:“inherit”}}>
-{new Date().toLocaleDateString(“en-GB”,{weekday:“long”,day:“numeric”,month:“long”}).toLowerCase()}
-</p>
-<p style={{fontSize:22,color:”#fff”,fontFamily:”‘DM Serif Display’,serif”,fontStyle:“italic”,lineHeight:1.3,margin:0}}>
-“{getQuote()}”
-</p>
-</div>
-</div>
-
-```
-  <div style={{padding:"20px 18px 0"}}>
-
-    {/* Stats row */}
-    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:10}}>
-      {/* Weekly sessions */}
-      <GradientCard
-        gradient="radial-gradient(ellipse at 30% 30%, #4a7a5a 0%, #1a3a28 50%, #000 100%)"
-        height={130}>
-        <p style={{fontSize:10,color:"rgba(255,255,255,0.4)",textTransform:"uppercase",letterSpacing:"0.1em",margin:"0 0 8px"}}>this week</p>
-        <div style={{display:"flex",gap:4,marginBottom:10}}>
-          {[1,2,3,4].map(i=><div key={i} style={{flex:1,height:2,borderRadius:1,background:i<=ww.length?"#D4FF00":"rgba(255,255,255,0.1)"}}/>)}
+  return(
+    <div style={{background:"#000",minHeight:"100vh",paddingBottom:100}}>
+      {/* Hero — full bleed gradient with illustration */}
+      <div style={{position:"relative",height:320,background:"radial-gradient(ellipse at 60% 40%, #8b7a6a 0%, #5a4535 25%, #2a1a10 55%, #000 85%)",overflow:"hidden"}}>
+        {/* Second light source */}
+        <div style={{position:"absolute",top:0,left:0,right:0,bottom:0,background:"radial-gradient(ellipse at 20% 70%, #6a8b7a 0%, transparent 50%)",pointerEvents:"none"}}/>
+        {/* Illustration */}
+        <div style={{position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-54%)",opacity:0.9}}>
+          <IllustrationA color="#D4FF00" size={200}/>
         </div>
-        <p style={{margin:0,fontSize:36,color:"#fff",fontFamily:"'DM Serif Display',serif",fontWeight:400,lineHeight:1}}>{ww.length}<span style={{fontSize:14,color:"rgba(255,255,255,0.35)",fontFamily:"inherit"}}>/4</span></p>
-        {hit&&<p style={{margin:"4px 0 0",fontSize:11,color:"#D4FF00"}}>goal hit ✦</p>}
-      </GradientCard>
-
-      {/* Body weight */}
-      <GradientCard
-        gradient="radial-gradient(ellipse at 70% 30%, #5a6a8b 0%, #1a2a3a 50%, #000 100%)"
-        height={130}
-        onClick={onLogWeight}>
-        <p style={{fontSize:10,color:"rgba(255,255,255,0.4)",textTransform:"uppercase",letterSpacing:"0.1em",margin:"0 0 8px"}}>body weight</p>
-        {latestBW
-          ?<><p style={{margin:0,fontSize:36,color:"#fff",fontFamily:"'DM Serif Display',serif",fontWeight:400,lineHeight:1}}>{latestBW.weight}<span style={{fontSize:14,color:"rgba(255,255,255,0.35)",fontFamily:"inherit"}}> kg</span></p>
-             <p style={{margin:"4px 0 0",fontSize:11,color:"rgba(255,255,255,0.4)"}}>{fmtShort(latestBW.date)}</p></>
-          :<p style={{margin:"8px 0 0",fontSize:16,color:"rgba(255,255,255,0.5)",fontFamily:"'DM Serif Display',serif",fontStyle:"italic"}}>tap to log ✦</p>
-        }
-      </GradientCard>
-    </div>
-
-    {/* Calories — wide card */}
-    <GradientCard
-      gradient="radial-gradient(ellipse at 80% 20%, #8b6a3a 0%, #5a3a18 40%, #1a1008 70%, #000 100%)"
-      height={110}
-      onClick={onLogCalories}
-      style={{marginBottom:10}}>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:12}}>
-        <p style={{fontSize:10,color:"rgba(255,255,255,0.4)",textTransform:"uppercase",letterSpacing:"0.1em",margin:0}}>calories today</p>
-        <p style={{fontSize:13,color:todayCal?(calPct>=100?"#D4FF00":"rgba(255,255,255,0.7)"):"rgba(255,255,255,0.3)",margin:0}}>
-          {todayCal?`${todayCal} / ${CAL_TARGET}`:`target ${CAL_TARGET}`}
-        </p>
+        {/* Text overlay */}
+        <div style={{position:"absolute",bottom:0,left:0,right:0,padding:"0 22px 22px",background:"linear-gradient(transparent, rgba(0,0,0,0.6))"}}>
+          <p style={{fontSize:11,color:"rgba(255,255,255,0.4)",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:6,fontFamily:"inherit"}}>
+            {new Date().toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long"}).toLowerCase()}
+          </p>
+          <p style={{fontSize:22,color:"#fff",fontFamily:"'DM Serif Display',serif",fontStyle:"italic",lineHeight:1.3,margin:0}}>
+            "{getQuote()}"
+          </p>
+        </div>
       </div>
-      <div style={{height:3,borderRadius:2,background:"rgba(255,255,255,0.1)",overflow:"hidden",marginBottom:8}}>
-        <div style={{height:"100%",width:calPct+"%",borderRadius:2,background:calPct>=100?"#D4FF00":"rgba(255,255,255,0.5)",transition:"width 0.5s"}}/>
-      </div>
-      {!todayCal&&<p style={{margin:0,fontSize:13,color:"rgba(255,255,255,0.35)",fontFamily:"'DM Serif Display',serif",fontStyle:"italic"}}>tap to log ✦</p>}
-    </GradientCard>
 
-    {/* Today badge */}
-    {todayW&&(
-      <div style={{marginBottom:10,padding:"12px 16px",borderRadius:16,background:"#111",border:"1px solid #1a1a1a",display:"flex",alignItems:"center",gap:10}}>
-        <span style={{fontSize:12,color:"#D4FF00"}}>✦</span>
-        <p style={{margin:0,fontSize:13,color:"#e0e0e0"}}>{getType(todayW.typeId).label} <span style={{color:"#555"}}>logged today</span></p>
-      </div>
-    )}
+      <div style={{padding:"20px 18px 0"}}>
 
-    {/* Start workout */}
-    <p style={{fontSize:10,color:"#333",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:12,marginTop:8}}>start workout</p>
-    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
-      {WORKOUT_TYPES.map(t=>(
-        <GradientCard key={t.id} gradient={t.gradient} height={100} onClick={()=>onStart(t.id)}>
-          <div style={{display:"flex",flexDirection:"column",justifyContent:"space-between",height:"100%"}}>
-            <p style={{margin:0,fontSize:10,color:"rgba(255,255,255,0.5)",textTransform:"uppercase",letterSpacing:"0.08em"}}>{t.sub}</p>
-            <p style={{margin:0,fontSize:15,color:"#fff",fontFamily:"'DM Serif Display',serif",fontWeight:400}}>{t.label}</p>
+        {/* Stats row */}
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:10}}>
+          {/* Weekly sessions */}
+          <GradientCard
+            gradient="radial-gradient(ellipse at 30% 30%, #4a7a5a 0%, #1a3a28 50%, #000 100%)"
+            height={130}>
+            <p style={{fontSize:10,color:"rgba(255,255,255,0.4)",textTransform:"uppercase",letterSpacing:"0.1em",margin:"0 0 8px"}}>this week</p>
+            <div style={{display:"flex",gap:4,marginBottom:10}}>
+              {[1,2,3,4].map(i=><div key={i} style={{flex:1,height:2,borderRadius:1,background:i<=ww.length?"#D4FF00":"rgba(255,255,255,0.1)"}}/>)}
+            </div>
+            <p style={{margin:0,fontSize:36,color:"#fff",fontFamily:"'DM Serif Display',serif",fontWeight:400,lineHeight:1}}>{ww.length}<span style={{fontSize:14,color:"rgba(255,255,255,0.35)",fontFamily:"inherit"}}>/4</span></p>
+            {hit&&<p style={{margin:"4px 0 0",fontSize:11,color:"#D4FF00"}}>goal hit ✦</p>}
+          </GradientCard>
+
+          {/* Body weight */}
+          <GradientCard
+            gradient="radial-gradient(ellipse at 70% 30%, #5a6a8b 0%, #1a2a3a 50%, #000 100%)"
+            height={130}
+            onClick={onLogWeight}>
+            <p style={{fontSize:10,color:"rgba(255,255,255,0.4)",textTransform:"uppercase",letterSpacing:"0.1em",margin:"0 0 8px"}}>body weight</p>
+            {latestBW
+              ?<><p style={{margin:0,fontSize:36,color:"#fff",fontFamily:"'DM Serif Display',serif",fontWeight:400,lineHeight:1}}>{latestBW.weight}<span style={{fontSize:14,color:"rgba(255,255,255,0.35)",fontFamily:"inherit"}}> kg</span></p>
+                 <p style={{margin:"4px 0 0",fontSize:11,color:"rgba(255,255,255,0.4)"}}>{fmtShort(latestBW.date)}</p></>
+              :<p style={{margin:"8px 0 0",fontSize:16,color:"rgba(255,255,255,0.5)",fontFamily:"'DM Serif Display',serif",fontStyle:"italic"}}>tap to log ✦</p>
+            }
+          </GradientCard>
+        </div>
+
+        {/* Calories — wide card */}
+        <GradientCard
+          gradient="radial-gradient(ellipse at 80% 20%, #8b6a3a 0%, #5a3a18 40%, #1a1008 70%, #000 100%)"
+          height={110}
+          onClick={onLogCalories}
+          style={{marginBottom:10}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:12}}>
+            <p style={{fontSize:10,color:"rgba(255,255,255,0.4)",textTransform:"uppercase",letterSpacing:"0.1em",margin:0}}>calories today</p>
+            <p style={{fontSize:13,color:todayCal?(calPct>=100?"#D4FF00":"rgba(255,255,255,0.7)"):"rgba(255,255,255,0.3)",margin:0}}>
+              {todayCal?`${todayCal} / ${CAL_TARGET}`:`target ${CAL_TARGET}`}
+            </p>
           </div>
+          <div style={{height:3,borderRadius:2,background:"rgba(255,255,255,0.1)",overflow:"hidden",marginBottom:8}}>
+            <div style={{height:"100%",width:calPct+"%",borderRadius:2,background:calPct>=100?"#D4FF00":"rgba(255,255,255,0.5)",transition:"width 0.5s"}}/>
+          </div>
+          {!todayCal&&<p style={{margin:0,fontSize:13,color:"rgba(255,255,255,0.35)",fontFamily:"'DM Serif Display',serif",fontStyle:"italic"}}>tap to log ✦</p>}
         </GradientCard>
-      ))}
-    </div>
-  </div>
-</div>
-```
 
-);
+        {/* Today badge */}
+        {todayW&&(
+          <div style={{marginBottom:10,padding:"12px 16px",borderRadius:16,background:"#111",border:"1px solid #1a1a1a",display:"flex",alignItems:"center",gap:10}}>
+            <span style={{fontSize:12,color:"#D4FF00"}}>✦</span>
+            <p style={{margin:0,fontSize:13,color:"#e0e0e0"}}>{getType(todayW.typeId).label} <span style={{color:"#555"}}>logged today</span></p>
+          </div>
+        )}
+
+        {/* Start workout */}
+        <p style={{fontSize:10,color:"#333",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:12,marginTop:8}}>start workout</p>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+          {WORKOUT_TYPES.map(t=>(
+            <GradientCard key={t.id} gradient={t.gradient} height={100} onClick={()=>onStart(t.id)}>
+              <div style={{display:"flex",flexDirection:"column",justifyContent:"space-between",height:"100%"}}>
+                <p style={{margin:0,fontSize:10,color:"rgba(255,255,255,0.5)",textTransform:"uppercase",letterSpacing:"0.08em"}}>{t.sub}</p>
+                <p style={{margin:0,fontSize:15,color:"#fff",fontFamily:"'DM Serif Display',serif",fontWeight:400}}>{t.label}</p>
+              </div>
+            </GradientCard>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 // ─── Log Workout ────────────────────────────────────────────────────────────────
 
 function LogWorkout({typeId,onSave,onBack,initialData,customEx}){
-const type=getType(typeId);
-const isCardio=typeId===“cardio”;
-const allEx=[…new Set([…Object.values(DEFAULT_EXERCISES).flat(),…Object.values(customEx).flat()])];
-const mkEx=()=>(DEFAULT_EXERCISES[typeId]||[]).map((name,i)=>({id:Date.now()+i,name,weight:DEFAULT_WEIGHTS[name]??0,sets:3,reps:10,notes:””}));
-const [date,setDate]=useState(initialData?.date||today());
-const [exercises,setExercises]=useState(initialData?.exercises?.length?initialData.exercises:mkEx);
-const [tags,setTags]=useState(initialData?.tags||[]);
-const [energy,setEnergy]=useState(initialData?.energy||null);
-const [cardio,setCardio]=useState(initialData?.cardio||{duration:45,intensity:“medium”,notes:””});
-const toggleTag=t=>setTags(p=>p.includes(t)?p.filter(x=>x!==t):[…p,t]);
-const save=()=>{
-const newNames=exercises.map(e=>e.name).filter(n=>n&&!allEx.includes(n));
-onSave({id:initialData?.id||Date.now(),date,typeId,exercises:isCardio?[]:exercises.filter(e=>e.name),cardio:isCardio?cardio:null,tags,energy},newNames);
-};
+  const type=getType(typeId);
+  const isCardio=typeId==="cardio";
+  const allEx=[...new Set([...Object.values(DEFAULT_EXERCISES).flat(),...Object.values(customEx).flat()])];
+  const mkEx=()=>(DEFAULT_EXERCISES[typeId]||[]).map((name,i)=>({id:Date.now()+i,name,weight:DEFAULT_WEIGHTS[name]??0,sets:3,reps:10,notes:""}));
+  const [date,setDate]=useState(initialData?.date||today());
+  const [exercises,setExercises]=useState(initialData?.exercises?.length?initialData.exercises:mkEx);
+  const [tags,setTags]=useState(initialData?.tags||[]);
+  const [energy,setEnergy]=useState(initialData?.energy||null);
+  const [cardio,setCardio]=useState(initialData?.cardio||{duration:45,intensity:"medium",notes:""});
+  const toggleTag=t=>setTags(p=>p.includes(t)?p.filter(x=>x!==t):[...p,t]);
+  const save=()=>{
+    const newNames=exercises.map(e=>e.name).filter(n=>n&&!allEx.includes(n));
+    onSave({id:initialData?.id||Date.now(),date,typeId,exercises:isCardio?[]:exercises.filter(e=>e.name),cardio:isCardio?cardio:null,tags,energy},newNames);
+  };
 
-return(
-<div style={{background:”#000”,minHeight:“100vh”,paddingBottom:120}}>
-{/* Header with gradient */}
-<div style={{position:“relative”,height:220,background:type.gradient,overflow:“hidden”}}>
-<div style={{position:“absolute”,inset:0,background:“linear-gradient(transparent 40%, rgba(0,0,0,0.7) 100%)”}}/>
-<div style={{position:“absolute”,bottom:0,left:0,right:0,padding:“0 20px 20px”}}>
-<button onClick={onBack} style={{background:“none”,border:“none”,color:“rgba(255,255,255,0.5)”,cursor:“pointer”,padding:0,marginBottom:14,fontSize:13,fontFamily:“inherit”,display:“block”}}>← back</button>
-<p style={{margin:“0 0 4px”,fontSize:10,color:“rgba(255,255,255,0.45)”,textTransform:“uppercase”,letterSpacing:“0.12em”}}>{type.sub}</p>
-<h2 style={{margin:0,fontSize:34,fontFamily:”‘DM Serif Display’,serif”,fontWeight:400,color:”#fff”,lineHeight:1}}>{type.label}</h2>
-</div>
-</div>
-
-```
-  <div style={{padding:"20px 18px"}}>
-    <div style={{marginBottom:20}}>
-      <p style={{fontSize:10,color:"#555",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:8}}>date</p>
-      <input type="date" value={date} onChange={e=>setDate(e.target.value)}
-        style={{background:"#0d0d0d",border:"1px solid #1a1a1a",borderRadius:10,padding:"10px 14px",color:"#e0e0e0",fontSize:14,width:"100%",outline:"none",fontFamily:"inherit"}}/>
-    </div>
-
-    {isCardio?(
-      <div style={{marginBottom:20,display:"flex",flexDirection:"column",gap:14}}>
-        <NumInput label="duration (min)" value={cardio.duration} step={5} min={5} onChange={v=>setCardio(c=>({...c,duration:v}))}/>
-        <div>
-          <p style={{fontSize:10,color:"#555",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:8}}>intensity</p>
-          <div style={{display:"flex",gap:8}}>{INTENSITIES.map(i=><Chip key={i} label={i} active={cardio.intensity===i} onClick={()=>setCardio(c=>({...c,intensity:i}))}/>)}</div>
+  return(
+    <div style={{background:"#000",minHeight:"100vh",paddingBottom:120}}>
+      {/* Header with gradient */}
+      <div style={{position:"relative",height:220,background:type.gradient,overflow:"hidden"}}>
+        <div style={{position:"absolute",inset:0,background:"linear-gradient(transparent 40%, rgba(0,0,0,0.7) 100%)"}}/>
+        <div style={{position:"absolute",bottom:0,left:0,right:0,padding:"0 20px 20px"}}>
+          <button onClick={onBack} style={{background:"none",border:"none",color:"rgba(255,255,255,0.5)",cursor:"pointer",padding:0,marginBottom:14,fontSize:13,fontFamily:"inherit",display:"block"}}>← back</button>
+          <p style={{margin:"0 0 4px",fontSize:10,color:"rgba(255,255,255,0.45)",textTransform:"uppercase",letterSpacing:"0.12em"}}>{type.sub}</p>
+          <h2 style={{margin:0,fontSize:34,fontFamily:"'DM Serif Display',serif",fontWeight:400,color:"#fff",lineHeight:1}}>{type.label}</h2>
         </div>
-        <input value={cardio.notes} onChange={e=>setCardio(c=>({...c,notes:e.target.value}))} placeholder="notes (e.g. padel match)"
-          style={{background:"#0d0d0d",border:"1px solid #1a1a1a",borderRadius:10,padding:"10px 14px",color:"#e0e0e0",fontSize:13,width:"100%",outline:"none",fontFamily:"inherit"}}/>
       </div>
-    ):(
-      <>
-        <p style={{fontSize:10,color:"#555",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:12}}>exercises</p>
-        {exercises.map(ex=>(
-          <ExerciseRow key={ex.id} exercise={ex} typeGradient={type.gradient} allEx={allEx}
-            onChange={u=>setExercises(p=>p.map(e=>e.id===ex.id?u:e))}
-            onRemove={()=>setExercises(p=>p.filter(e=>e.id!==ex.id))}/>
-        ))}
-        <button onClick={()=>setExercises(p=>[...p,{id:Date.now(),name:"",weight:0,sets:3,reps:10,notes:""}])}
-          style={{width:"100%",padding:"12px",borderRadius:12,border:"1px dashed #222",background:"none",color:"#555",fontSize:13,cursor:"pointer",marginBottom:20,fontFamily:"inherit"}}>
-          + add exercise
+
+      <div style={{padding:"20px 18px"}}>
+        <div style={{marginBottom:20}}>
+          <p style={{fontSize:10,color:"#555",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:8}}>date</p>
+          <input type="date" value={date} onChange={e=>setDate(e.target.value)}
+            style={{background:"#0d0d0d",border:"1px solid #1a1a1a",borderRadius:10,padding:"10px 14px",color:"#e0e0e0",fontSize:14,width:"100%",outline:"none",fontFamily:"inherit"}}/>
+        </div>
+
+        {isCardio?(
+          <div style={{marginBottom:20,display:"flex",flexDirection:"column",gap:14}}>
+            <NumInput label="duration (min)" value={cardio.duration} step={5} min={5} onChange={v=>setCardio(c=>({...c,duration:v}))}/>
+            <div>
+              <p style={{fontSize:10,color:"#555",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:8}}>intensity</p>
+              <div style={{display:"flex",gap:8}}>{INTENSITIES.map(i=><Chip key={i} label={i} active={cardio.intensity===i} onClick={()=>setCardio(c=>({...c,intensity:i}))}/>)}</div>
+            </div>
+            <input value={cardio.notes} onChange={e=>setCardio(c=>({...c,notes:e.target.value}))} placeholder="notes (e.g. padel match)"
+              style={{background:"#0d0d0d",border:"1px solid #1a1a1a",borderRadius:10,padding:"10px 14px",color:"#e0e0e0",fontSize:13,width:"100%",outline:"none",fontFamily:"inherit"}}/>
+          </div>
+        ):(
+          <>
+            <p style={{fontSize:10,color:"#555",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:12}}>exercises</p>
+            {exercises.map(ex=>(
+              <ExerciseRow key={ex.id} exercise={ex} typeGradient={type.gradient} allEx={allEx}
+                onChange={u=>setExercises(p=>p.map(e=>e.id===ex.id?u:e))}
+                onRemove={()=>setExercises(p=>p.filter(e=>e.id!==ex.id))}/>
+            ))}
+            <button onClick={()=>setExercises(p=>[...p,{id:Date.now(),name:"",weight:0,sets:3,reps:10,notes:""}])}
+              style={{width:"100%",padding:"12px",borderRadius:12,border:"1px dashed #222",background:"none",color:"#555",fontSize:13,cursor:"pointer",marginBottom:20,fontFamily:"inherit"}}>
+              + add exercise
+            </button>
+          </>
+        )}
+
+        <div style={{marginBottom:18}}>
+          <p style={{fontSize:10,color:"#555",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:10}}>energy</p>
+          <div style={{display:"flex",gap:8}}>
+            {[["🪫","low"],["⚡","medium"],["🔥","high"]].map(([icon,val])=>(
+              <Chip key={val} label={icon+" "+val} active={energy===val} onClick={()=>setEnergy(energy===val?null:val)}/>
+            ))}
+          </div>
+        </div>
+
+        <div style={{marginBottom:28}}>
+          <p style={{fontSize:10,color:"#555",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:10}}>tags</p>
+          <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
+            {TAGS.map(t=><Chip key={t} label={t} active={tags.includes(t)} onClick={()=>toggleTag(t)}/>)}
+          </div>
+        </div>
+
+        <button onClick={save}
+          style={{width:"100%",padding:"16px",borderRadius:50,background:"#D4FF00",border:"none",color:"#000",fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:"inherit",letterSpacing:"0.03em"}}>
+          {initialData?"update workout":"save workout"}
         </button>
-      </>
-    )}
-
-    <div style={{marginBottom:18}}>
-      <p style={{fontSize:10,color:"#555",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:10}}>energy</p>
-      <div style={{display:"flex",gap:8}}>
-        {[["🪫","low"],["⚡","medium"],["🔥","high"]].map(([icon,val])=>(
-          <Chip key={val} label={icon+" "+val} active={energy===val} onClick={()=>setEnergy(energy===val?null:val)}/>
-        ))}
       </div>
     </div>
-
-    <div style={{marginBottom:28}}>
-      <p style={{fontSize:10,color:"#555",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:10}}>tags</p>
-      <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
-        {TAGS.map(t=><Chip key={t} label={t} active={tags.includes(t)} onClick={()=>toggleTag(t)}/>)}
-      </div>
-    </div>
-
-    <button onClick={save}
-      style={{width:"100%",padding:"16px",borderRadius:50,background:"#D4FF00",border:"none",color:"#000",fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:"inherit",letterSpacing:"0.03em"}}>
-      {initialData?"update workout":"save workout"}
-    </button>
-  </div>
-</div>
-```
-
-);
+  );
 }
 
 // ─── Log View ───────────────────────────────────────────────────────────────────
 
 function LogView({workouts,onEdit,onDelete}){
-const now=new Date();
-const [year,setYear]=useState(now.getFullYear());
-const [month,setMonth]=useState(now.getMonth());
-const [selected,setSelected]=useState(today());
-const [confirmDel,setConfirmDel]=useState(null);
+  const now=new Date();
+  const [year,setYear]=useState(now.getFullYear());
+  const [month,setMonth]=useState(now.getMonth());
+  const [selected,setSelected]=useState(today());
+  const [confirmDel,setConfirmDel]=useState(null);
 
-const days=new Date(year,month+1,0).getDate();
-const firstDay=new Date(year,month,1).getDay();
-const wDates={};
-workouts.forEach(w=>{wDates[w.date]=w.typeId;});
-const prevM=()=>{if(month===0){setYear(y=>y-1);setMonth(11);}else setMonth(m=>m-1);};
-const nextM=()=>{if(month===11){setYear(y=>y+1);setMonth(0);}else setMonth(m=>m+1);};
-const mName=new Date(year,month,1).toLocaleDateString(“en-GB”,{month:“long”,year:“numeric”}).toLowerCase();
-const selW=workouts.filter(w=>w.date===selected).sort((a,b)=>b.id-a.id);
+  const days=new Date(year,month+1,0).getDate();
+  const firstDay=new Date(year,month,1).getDay();
+  const wDates={};
+  workouts.forEach(w=>{wDates[w.date]=w.typeId;});
+  const prevM=()=>{if(month===0){setYear(y=>y-1);setMonth(11);}else setMonth(m=>m-1);};
+  const nextM=()=>{if(month===11){setYear(y=>y+1);setMonth(0);}else setMonth(m=>m+1);};
+  const mName=new Date(year,month,1).toLocaleDateString("en-GB",{month:"long",year:"numeric"}).toLowerCase();
+  const selW=workouts.filter(w=>w.date===selected).sort((a,b)=>b.id-a.id);
 
-// Sort workouts for the card list (most recent first)
-const sortedAll=[…workouts].sort((a,b)=>b.date.localeCompare(a.date));
+  // Sort workouts for the card list (most recent first)
+  const sortedAll=[...workouts].sort((a,b)=>b.date.localeCompare(a.date));
 
-return(
-<div style={{background:”#000”,minHeight:“100vh”,paddingBottom:100}}>
-{/* Header */}
-<div style={{padding:“56px 22px 20px”,background:”#000”}}>
-<p style={{fontSize:11,color:”#333”,letterSpacing:“0.12em”,textTransform:“uppercase”,marginBottom:6}}>your sessions</p>
-<h2 style={{margin:0,fontSize:40,fontFamily:”‘DM Serif Display’,serif”,fontWeight:400,color:”#fff”,lineHeight:1}}>log.</h2>
-</div>
-
-```
-  <div style={{padding:"0 18px"}}>
-    {/* Calendar — dark green Pillowtalk style */}
-    <div style={{background:"#0d1a0f",borderRadius:20,padding:"18px",marginBottom:22,border:"1px solid #1a2a1a"}}>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:18}}>
-        <button onClick={prevM} style={{background:"none",border:"none",color:"#4a6a4a",cursor:"pointer",fontSize:22,padding:"4px 8px",fontFamily:"inherit"}}>‹</button>
-        <p style={{margin:0,fontSize:13,color:"#c0d0c0",letterSpacing:"0.06em"}}>{mName}</p>
-        <button onClick={nextM} style={{background:"none",border:"none",color:"#4a6a4a",cursor:"pointer",fontSize:22,padding:"4px 8px",fontFamily:"inherit"}}>›</button>
+  return(
+    <div style={{background:"#000",minHeight:"100vh",paddingBottom:100}}>
+      {/* Header */}
+      <div style={{padding:"56px 22px 20px",background:"#000"}}>
+        <p style={{fontSize:11,color:"#333",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:6}}>your sessions</p>
+        <h2 style={{margin:0,fontSize:40,fontFamily:"'DM Serif Display',serif",fontWeight:400,color:"#fff",lineHeight:1}}>log.</h2>
       </div>
-      <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:2,marginBottom:8}}>
-        {["su","mo","tu","we","th","fr","sa"].map(d=><div key={d} style={{textAlign:"center",fontSize:10,color:"#3a5a3a",padding:"2px 0",letterSpacing:"0.05em"}}>{d}</div>)}
-      </div>
-      <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:4}}>
-        {Array.from({length:firstDay}).map((_,i)=><div key={"e"+i}/>)}
-        {Array.from({length:days}).map((_,i)=>{
-          const d=i+1;
-          const iso=`${year}-${String(month+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
-          const wType=wDates[iso];
-          const isToday=iso===today();
-          const isSel=iso===selected;
-          const t=wType?getType(wType):null;
-          return(
-            <button key={d} onClick={()=>setSelected(iso)}
-              style={{aspectRatio:"1",borderRadius:"50%",border:"none",background:isSel?"#fff":t?"#D4FF00":isToday?"#1a3a1a":"transparent",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"inherit"}}>
-              <span style={{fontSize:11,color:isSel?"#000":t?"#000":isToday?"#6a9a6a":"#3a5a3a"}}>{d}</span>
-            </button>
-          );
-        })}
-      </div>
-    </div>
 
-    {/* Selected day */}
-    <p style={{fontSize:10,color:"#333",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:14}}>{fmtDate(selected)}</p>
-    {selW.length===0
-      ?<p style={{color:"#333",fontSize:14,fontStyle:"italic",marginBottom:24,fontFamily:"'DM Serif Display',serif"}}>nothing logged.</p>
-      :selW.map(w=>{
-        const t=getType(w.typeId);
-        return(
-          <div key={w.id} style={{borderRadius:20,overflow:"hidden",marginBottom:10}}>
-            {/* Gradient header */}
-            <div style={{background:t.gradient,padding:"14px 16px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-              <div>
-                <p style={{margin:0,fontSize:16,color:"#fff",fontFamily:"'DM Serif Display',serif",fontWeight:400}}>{t.label}</p>
-                {w.energy&&<p style={{margin:"2px 0 0",fontSize:11,color:"rgba(255,255,255,0.6)"}}>{w.energy}</p>}
-              </div>
-              <div style={{display:"flex",gap:8}}>
-                <button onClick={()=>onEdit(w)} style={{background:"rgba(255,255,255,0.2)",border:"none",borderRadius:20,color:"#fff",fontSize:12,cursor:"pointer",padding:"5px 12px",fontFamily:"inherit",backdropFilter:"blur(4px)"}}>edit</button>
-                <button onClick={()=>setConfirmDel(w.id)} style={{background:"rgba(255,0,0,0.2)",border:"none",borderRadius:20,color:"#ffaaaa",fontSize:12,cursor:"pointer",padding:"5px 12px",fontFamily:"inherit",backdropFilter:"blur(4px)"}}>delete</button>
-              </div>
-            </div>
-            {/* Content */}
-            <div style={{background:"#0a0a0a",border:"1px solid #1a1a1a",borderTop:"none",borderRadius:"0 0 20px 20px"}}>
-              {w.cardio&&<div style={{padding:"12px 16px",color:"#888",fontSize:13}}>{w.cardio.duration}min · {w.cardio.intensity}{w.cardio.notes?" · "+w.cardio.notes:""}</div>}
-              {w.exercises?.map((ex,i)=>(
-                <div key={i} style={{display:"flex",justifyContent:"space-between",padding:"8px 16px",borderBottom:"1px solid #0f0f0f"}}>
-                  <span style={{fontSize:13,color:"#888"}}>{ex.name}</span>
-                  <span style={{fontSize:12,color:"#555"}}>{ex.weight>0?ex.weight+"kg":"bw"} · {ex.sets}×{ex.reps}</span>
-                </div>
-              ))}
-              {w.tags?.length>0&&(
-                <div style={{padding:"8px 16px 12px",display:"flex",gap:6,flexWrap:"wrap"}}>
-                  {w.tags.map(tag=><span key={tag} style={{fontSize:11,color:"#555",background:"#111",padding:"2px 8px",borderRadius:10}}>{tag}</span>)}
-                </div>
-              )}
-            </div>
+      <div style={{padding:"0 18px"}}>
+        {/* Calendar — dark green Pillowtalk style */}
+        <div style={{background:"#0d1a0f",borderRadius:20,padding:"18px",marginBottom:22,border:"1px solid #1a2a1a"}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:18}}>
+            <button onClick={prevM} style={{background:"none",border:"none",color:"#4a6a4a",cursor:"pointer",fontSize:22,padding:"4px 8px",fontFamily:"inherit"}}>‹</button>
+            <p style={{margin:0,fontSize:13,color:"#c0d0c0",letterSpacing:"0.06em"}}>{mName}</p>
+            <button onClick={nextM} style={{background:"none",border:"none",color:"#4a6a4a",cursor:"pointer",fontSize:22,padding:"4px 8px",fontFamily:"inherit"}}>›</button>
           </div>
-        );
-      })
-    }
+          <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:2,marginBottom:8}}>
+            {["su","mo","tu","we","th","fr","sa"].map(d=><div key={d} style={{textAlign:"center",fontSize:10,color:"#3a5a3a",padding:"2px 0",letterSpacing:"0.05em"}}>{d}</div>)}
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:4}}>
+            {Array.from({length:firstDay}).map((_,i)=><div key={"e"+i}/>)}
+            {Array.from({length:days}).map((_,i)=>{
+              const d=i+1;
+              const iso=`${year}-${String(month+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
+              const wType=wDates[iso];
+              const isToday=iso===today();
+              const isSel=iso===selected;
+              const t=wType?getType(wType):null;
+              return(
+                <button key={d} onClick={()=>setSelected(iso)}
+                  style={{aspectRatio:"1",borderRadius:"50%",border:"none",background:isSel?"#fff":t?"#D4FF00":isToday?"#1a3a1a":"transparent",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"inherit"}}>
+                  <span style={{fontSize:11,color:isSel?"#000":t?"#000":isToday?"#6a9a6a":"#3a5a3a"}}>{d}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
 
-    {/* All sessions as Pillowtalk-style entry cards */}
-    {sortedAll.length>0&&(
-      <>
-        <p style={{fontSize:10,color:"#333",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:14,marginTop:28}}>all sessions</p>
-        {sortedAll.map(w=>{
-          const t=getType(w.typeId);
-          return(
-            <div key={w.id} style={{borderRadius:20,overflow:"hidden",marginBottom:12,position:"relative",background:t.gradient,height:120}}>
-              <div style={{position:"absolute",inset:0,background:"linear-gradient(135deg,rgba(0,0,0,0.2),rgba(0,0,0,0.4))"}}/>
-              <div style={{position:"relative",zIndex:1,padding:"14px 16px",height:"100%",display:"flex",flexDirection:"column",justifyContent:"space-between"}}>
-                <p style={{margin:0,fontSize:11,color:"rgba(255,255,255,0.5)",textTransform:"uppercase",letterSpacing:"0.08em"}}>{t.sub}</p>
-                <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-end"}}>
-                  <p style={{margin:0,fontSize:18,color:"#fff",fontFamily:"'DM Serif Display',serif",fontWeight:400}}>{t.label}</p>
-                  <div style={{textAlign:"right"}}>
-                    <p style={{margin:0,fontSize:10,color:"rgba(255,255,255,0.5)"}}>{fmtMon(w.date)}</p>
-                    <p style={{margin:0,fontSize:32,color:"#fff",fontFamily:"'DM Serif Display',serif",fontWeight:400,lineHeight:1}}>{fmtDay(w.date)}</p>
+        {/* Selected day */}
+        <p style={{fontSize:10,color:"#333",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:14}}>{fmtDate(selected)}</p>
+        {selW.length===0
+          ?<p style={{color:"#333",fontSize:14,fontStyle:"italic",marginBottom:24,fontFamily:"'DM Serif Display',serif"}}>nothing logged.</p>
+          :selW.map(w=>{
+            const t=getType(w.typeId);
+            return(
+              <div key={w.id} style={{borderRadius:20,overflow:"hidden",marginBottom:10}}>
+                {/* Gradient header */}
+                <div style={{background:t.gradient,padding:"14px 16px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+                  <div>
+                    <p style={{margin:0,fontSize:16,color:"#fff",fontFamily:"'DM Serif Display',serif",fontWeight:400}}>{t.label}</p>
+                    {w.energy&&<p style={{margin:"2px 0 0",fontSize:11,color:"rgba(255,255,255,0.6)"}}>{w.energy}</p>}
+                  </div>
+                  <div style={{display:"flex",gap:8}}>
+                    <button onClick={()=>onEdit(w)} style={{background:"rgba(255,255,255,0.2)",border:"none",borderRadius:20,color:"#fff",fontSize:12,cursor:"pointer",padding:"5px 12px",fontFamily:"inherit",backdropFilter:"blur(4px)"}}>edit</button>
+                    <button onClick={()=>setConfirmDel(w.id)} style={{background:"rgba(255,0,0,0.2)",border:"none",borderRadius:20,color:"#ffaaaa",fontSize:12,cursor:"pointer",padding:"5px 12px",fontFamily:"inherit",backdropFilter:"blur(4px)"}}>delete</button>
                   </div>
                 </div>
+                {/* Content */}
+                <div style={{background:"#0a0a0a",border:"1px solid #1a1a1a",borderTop:"none",borderRadius:"0 0 20px 20px"}}>
+                  {w.cardio&&<div style={{padding:"12px 16px",color:"#888",fontSize:13}}>{w.cardio.duration}min · {w.cardio.intensity}{w.cardio.notes?" · "+w.cardio.notes:""}</div>}
+                  {w.exercises?.map((ex,i)=>(
+                    <div key={i} style={{display:"flex",justifyContent:"space-between",padding:"8px 16px",borderBottom:"1px solid #0f0f0f"}}>
+                      <span style={{fontSize:13,color:"#888"}}>{ex.name}</span>
+                      <span style={{fontSize:12,color:"#555"}}>{ex.weight>0?ex.weight+"kg":"bw"} · {ex.sets}×{ex.reps}</span>
+                    </div>
+                  ))}
+                  {w.tags?.length>0&&(
+                    <div style={{padding:"8px 16px 12px",display:"flex",gap:6,flexWrap:"wrap"}}>
+                      {w.tags.map(tag=><span key={tag} style={{fontSize:11,color:"#555",background:"#111",padding:"2px 8px",borderRadius:10}}>{tag}</span>)}
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-          );
-        })}
-      </>
-    )}
-  </div>
+            );
+          })
+        }
 
-  {/* Delete confirm */}
-  {confirmDel&&(
-    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.9)",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center",padding:"24px"}}>
-      <div style={{background:"#0d0d0d",border:"1px solid #222",borderRadius:24,padding:"28px 24px",width:"100%",maxWidth:320}}>
-        <div style={{textAlign:"center",marginBottom:20}}>
-          <IllustrationB color="#ff4444" size={60}/>
-        </div>
-        <p style={{margin:"0 0 8px",fontSize:22,color:"#fff",fontFamily:"'DM Serif Display',serif",textAlign:"center"}}>delete this session?</p>
-        <p style={{margin:"0 0 24px",fontSize:13,color:"#555",textAlign:"center"}}>this action can't be undone.</p>
-        <div style={{display:"flex",gap:10}}>
-          <button onClick={()=>setConfirmDel(null)} style={{flex:1,padding:"14px",borderRadius:50,background:"none",border:"1px solid #222",color:"#888",fontSize:14,cursor:"pointer",fontFamily:"inherit"}}>cancel</button>
-          <button onClick={()=>{onDelete(confirmDel);setConfirmDel(null);}} style={{flex:1,padding:"14px",borderRadius:50,background:"#ff4444",border:"none",color:"#fff",fontSize:14,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>delete</button>
-        </div>
+        {/* All sessions as Pillowtalk-style entry cards */}
+        {sortedAll.length>0&&(
+          <>
+            <p style={{fontSize:10,color:"#333",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:14,marginTop:28}}>all sessions</p>
+            {sortedAll.map(w=>{
+              const t=getType(w.typeId);
+              return(
+                <div key={w.id} style={{borderRadius:20,overflow:"hidden",marginBottom:12,position:"relative",background:t.gradient,height:120}}>
+                  <div style={{position:"absolute",inset:0,background:"linear-gradient(135deg,rgba(0,0,0,0.2),rgba(0,0,0,0.4))"}}/>
+                  <div style={{position:"relative",zIndex:1,padding:"14px 16px",height:"100%",display:"flex",flexDirection:"column",justifyContent:"space-between"}}>
+                    <p style={{margin:0,fontSize:11,color:"rgba(255,255,255,0.5)",textTransform:"uppercase",letterSpacing:"0.08em"}}>{t.sub}</p>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-end"}}>
+                      <p style={{margin:0,fontSize:18,color:"#fff",fontFamily:"'DM Serif Display',serif",fontWeight:400}}>{t.label}</p>
+                      <div style={{textAlign:"right"}}>
+                        <p style={{margin:0,fontSize:10,color:"rgba(255,255,255,0.5)"}}>{fmtMon(w.date)}</p>
+                        <p style={{margin:0,fontSize:32,color:"#fff",fontFamily:"'DM Serif Display',serif",fontWeight:400,lineHeight:1}}>{fmtDay(w.date)}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </>
+        )}
       </div>
-    </div>
-  )}
-</div>
-```
 
-);
+      {/* Delete confirm */}
+      {confirmDel&&(
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.9)",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center",padding:"24px"}}>
+          <div style={{background:"#0d0d0d",border:"1px solid #222",borderRadius:24,padding:"28px 24px",width:"100%",maxWidth:320}}>
+            <div style={{textAlign:"center",marginBottom:20}}>
+              <IllustrationB color="#ff4444" size={60}/>
+            </div>
+            <p style={{margin:"0 0 8px",fontSize:22,color:"#fff",fontFamily:"'DM Serif Display',serif",textAlign:"center"}}>delete this session?</p>
+            <p style={{margin:"0 0 24px",fontSize:13,color:"#555",textAlign:"center"}}>this action can't be undone.</p>
+            <div style={{display:"flex",gap:10}}>
+              <button onClick={()=>setConfirmDel(null)} style={{flex:1,padding:"14px",borderRadius:50,background:"none",border:"1px solid #222",color:"#888",fontSize:14,cursor:"pointer",fontFamily:"inherit"}}>cancel</button>
+              <button onClick={()=>{onDelete(confirmDel);setConfirmDel(null);}} style={{flex:1,padding:"14px",borderRadius:50,background:"#ff4444",border:"none",color:"#fff",fontSize:14,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>delete</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
 
 // ─── Progress View ──────────────────────────────────────────────────────────────
 
 function ProgressView({workouts,bodyWeights,calories}){
-const [tab,setTab]=useState(“overview”);
-const [selEx,setSelEx]=useState(null);
+  const [tab,setTab]=useState("overview");
+  const [selEx,setSelEx]=useState(null);
 
-const totalSessions=workouts.length;
-const typeCounts=workouts.reduce((a,w)=>{a[w.typeId]=(a[w.typeId]||0)+1;return a;},{});
-const energyCounts=workouts.reduce((a,w)=>{if(w.energy)a[w.energy]=(a[w.energy]||0)+1;return a;},{});
-const weekSessions=workouts.filter(w=>getWeek(w.date)===getWeek(today())).length;
+  const totalSessions=workouts.length;
+  const typeCounts=workouts.reduce((a,w)=>{a[w.typeId]=(a[w.typeId]||0)+1;return a;},{});
+  const energyCounts=workouts.reduce((a,w)=>{if(w.energy)a[w.energy]=(a[w.energy]||0)+1;return a;},{});
+  const weekSessions=workouts.filter(w=>getWeek(w.date)===getWeek(today())).length;
 
-const exMap={};
-workouts.forEach(w=>(w.exercises||[]).forEach(ex=>{if(!ex.name)return;if(!exMap[ex.name])exMap[ex.name]=[];exMap[ex.name].push({date:w.date,weight:ex.weight,sets:ex.sets,reps:ex.reps});}));
-const exNames=Object.keys(exMap).sort();
-const exHist=selEx?[…exMap[selEx]].sort((a,b)=>a.date.localeCompare(b.date)):[];
-const maxW=exHist.reduce((m,h)=>Math.max(m,h.weight),0);
+  const exMap={};
+  workouts.forEach(w=>(w.exercises||[]).forEach(ex=>{if(!ex.name)return;if(!exMap[ex.name])exMap[ex.name]=[];exMap[ex.name].push({date:w.date,weight:ex.weight,sets:ex.sets,reps:ex.reps});}));
+  const exNames=Object.keys(exMap).sort();
+  const exHist=selEx?[...exMap[selEx]].sort((a,b)=>a.date.localeCompare(b.date)):[];
+  const maxW=exHist.reduce((m,h)=>Math.max(m,h.weight),0);
 
-const bwSorted=[…bodyWeights].sort((a,b)=>a.date.localeCompare(b.date)).slice(-12);
-const maxBW=bwSorted.reduce((m,b)=>Math.max(m,b.weight),0);
-const minBW=bwSorted.reduce((m,b)=>Math.min(m,b.weight),999);
+  const bwSorted=[...bodyWeights].sort((a,b)=>a.date.localeCompare(b.date)).slice(-12);
+  const maxBW=bwSorted.reduce((m,b)=>Math.max(m,b.weight),0);
+  const minBW=bwSorted.reduce((m,b)=>Math.min(m,b.weight),999);
 
-const last14=Array.from({length:14},(_,i)=>{const d=new Date();d.setDate(d.getDate()-(13-i));const iso=d.toISOString().split(“T”)[0];return{date:iso,cal:calories[iso]||0};});
-const calVals=last14.filter(d=>d.cal>0).map(d=>d.cal);
-const calAvg=calVals.length?Math.round(calVals.reduce((a,b)=>a+b,0)/calVals.length):0;
-const maxCal=Math.max(…last14.map(x=>x.cal),CAL_TARGET,1);
+  const last14=Array.from({length:14},(_,i)=>{const d=new Date();d.setDate(d.getDate()-(13-i));const iso=d.toISOString().split("T")[0];return{date:iso,cal:calories[iso]||0};});
+  const calVals=last14.filter(d=>d.cal>0).map(d=>d.cal);
+  const calAvg=calVals.length?Math.round(calVals.reduce((a,b)=>a+b,0)/calVals.length):0;
+  const maxCal=Math.max(...last14.map(x=>x.cal),CAL_TARGET,1);
 
-return(
-<div style={{background:”#000”,minHeight:“100vh”,paddingBottom:100}}>
-{/* Header */}
-<div style={{position:“relative”,padding:“56px 22px 0”,overflow:“hidden”}}>
-{/* Forest green section like Pillowtalk patterns page */}
-<div style={{position:“absolute”,bottom:-40,left:0,right:0,height:120,background:”#0d1a0f”,borderRadius:“50% 50% 0 0 / 30px 30px 0 0”}}/>
-<div style={{position:“relative”,zIndex:1,marginBottom:20}}>
-<p style={{fontSize:11,color:”#333”,letterSpacing:“0.12em”,textTransform:“uppercase”,marginBottom:6}}>your stats</p>
-<h2 style={{margin:“0 0 20px”,fontSize:40,fontFamily:”‘DM Serif Display’,serif”,fontWeight:400,color:”#fff”,lineHeight:1}}>progress.</h2>
-{/* Pill tabs — white on dark like Pillowtalk */}
-<div style={{display:“inline-flex”,background:”#111”,borderRadius:50,padding:“3px”,gap:3}}>
-{[[“overview”,“overview”],[“exercises”,“exercises”],[“body”,“body”],[“calories”,“calories”]].map(([id,label])=>(
-<button key={id} onClick={()=>setTab(id)}
-style={{padding:“7px 14px”,borderRadius:50,fontSize:12,cursor:“pointer”,fontFamily:“inherit”,border:“none”,background:tab===id?”#fff”:“transparent”,color:tab===id?”#000”:”#555”,fontWeight:tab===id?600:400,transition:“all 0.2s”}}>
-{label}
-</button>
-))}
-</div>
-</div>
-</div>
-
-```
-  <div style={{padding:"24px 18px 0"}}>
-
-    {/* ── Overview ── */}
-    {tab==="overview"&&(
-      <div>
-        {/* Big stats */}
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:10}}>
-          <GradientCard gradient="radial-gradient(ellipse at 30% 40%, #4a7a5a 0%, #1a3a28 55%, #000 100%)" height={120}>
-            <p style={{margin:"0 0 6px",fontSize:10,color:"rgba(255,255,255,0.4)",textTransform:"uppercase",letterSpacing:"0.1em"}}>total sessions</p>
-            <p style={{margin:0,fontSize:48,color:"#fff",fontFamily:"'DM Serif Display',serif",fontWeight:400,lineHeight:1}}>{totalSessions}</p>
-          </GradientCard>
-          <GradientCard gradient="radial-gradient(ellipse at 70% 30%, #5a6a8b 0%, #1a2a3a 55%, #000 100%)" height={120}>
-            <p style={{margin:"0 0 6px",fontSize:10,color:"rgba(255,255,255,0.4)",textTransform:"uppercase",letterSpacing:"0.1em"}}>this week</p>
-            <p style={{margin:0,fontSize:48,color:"#fff",fontFamily:"'DM Serif Display',serif",fontWeight:400,lineHeight:1}}>{weekSessions}</p>
-          </GradientCard>
-        </div>
-
-        {/* Workout type breakdown */}
-        <div style={{background:"#0d1a0f",borderRadius:20,padding:"18px",marginBottom:10}}>
-          <p style={{margin:"0 0 16px",fontSize:10,color:"#3a6a3a",textTransform:"uppercase",letterSpacing:"0.1em"}}>✦ workout breakdown</p>
-          {WORKOUT_TYPES.map(t=>{
-            const count=typeCounts[t.id]||0;
-            if(!count)return null;
-            const pct=totalSessions>0?count/totalSessions*100:0;
-            return(
-              <div key={t.id} style={{marginBottom:14}}>
-                <div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}>
-                  <span style={{fontSize:13,color:"#a0c0a0"}}>{t.label}</span>
-                  <span style={{fontSize:12,color:"#4a6a4a"}}>{count}×</span>
-                </div>
-                <div style={{height:3,borderRadius:2,background:"#1a2a1a",overflow:"hidden"}}>
-                  <div style={{height:"100%",width:pct+"%",borderRadius:2,background:"#D4FF00"}}/>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Energy */}
-        {Object.keys(energyCounts).length>0&&(
-          <div style={{display:"flex",gap:10,marginBottom:10}}>
-            {[["low","🪫","radial-gradient(ellipse at 50% 30%, #5a6a8b 0%, #1a2030 70%, #000 100%)"],
-              ["medium","⚡","radial-gradient(ellipse at 50% 30%, #8b7a3a 0%, #3a3010 70%, #000 100%)"],
-              ["high","🔥","radial-gradient(ellipse at 50% 30%, #8b4a3a 0%, #3a1a10 70%, #000 100%)"]
-            ].filter(([k])=>energyCounts[k]).map(([key,icon,grad])=>(
-              <GradientCard key={key} gradient={grad} height={100} style={{flex:1}}>
-                <p style={{margin:"0 0 4px",fontSize:20}}>{icon}</p>
-                <p style={{margin:"0 0 2px",fontSize:26,color:"#fff",fontFamily:"'DM Serif Display',serif",fontWeight:400,lineHeight:1}}>{energyCounts[key]||0}</p>
-                <p style={{margin:0,fontSize:10,color:"rgba(255,255,255,0.4)",letterSpacing:"0.06em"}}>{key}</p>
-              </GradientCard>
+  return(
+    <div style={{background:"#000",minHeight:"100vh",paddingBottom:100}}>
+      {/* Header */}
+      <div style={{position:"relative",padding:"56px 22px 0",overflow:"hidden"}}>
+        {/* Forest green section like Pillowtalk patterns page */}
+        <div style={{position:"absolute",bottom:-40,left:0,right:0,height:120,background:"#0d1a0f",borderRadius:"50% 50% 0 0 / 30px 30px 0 0"}}/>
+        <div style={{position:"relative",zIndex:1,marginBottom:20}}>
+          <p style={{fontSize:11,color:"#333",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:6}}>your stats</p>
+          <h2 style={{margin:"0 0 20px",fontSize:40,fontFamily:"'DM Serif Display',serif",fontWeight:400,color:"#fff",lineHeight:1}}>progress.</h2>
+          {/* Pill tabs — white on dark like Pillowtalk */}
+          <div style={{display:"inline-flex",background:"#111",borderRadius:50,padding:"3px",gap:3}}>
+            {[["overview","overview"],["exercises","exercises"],["body","body"],["calories","calories"]].map(([id,label])=>(
+              <button key={id} onClick={()=>setTab(id)}
+                style={{padding:"7px 14px",borderRadius:50,fontSize:12,cursor:"pointer",fontFamily:"inherit",border:"none",background:tab===id?"#fff":"transparent",color:tab===id?"#000":"#555",fontWeight:tab===id?600:400,transition:"all 0.2s"}}>
+                {label}
+              </button>
             ))}
           </div>
-        )}
-
-        {/* Illustration accent */}
-        <div style={{display:"flex",justifyContent:"center",padding:"20px 0 10px",opacity:0.15}}>
-          <IllustrationC color="#D4FF00" size={120}/>
         </div>
       </div>
-    )}
 
-    {/* ── Exercises ── */}
-    {tab==="exercises"&&(
-      <div>
-        {exNames.length===0&&<p style={{color:"#333",fontSize:16,fontStyle:"italic",fontFamily:"'DM Serif Display',serif"}}>log workouts to see exercise trends.</p>}
-        <div style={{display:"flex",flexWrap:"wrap",gap:7,marginBottom:20}}>
-          {exNames.map(e=>(
-            <button key={e} onClick={()=>setSelEx(selEx===e?null:e)}
-              style={{padding:"6px 12px",borderRadius:40,fontSize:12,cursor:"pointer",fontFamily:"inherit",border:`1px solid ${selEx===e?"#D4FF00":"#1a1a1a"}`,background:selEx===e?"#D4FF0018":"transparent",color:selEx===e?"#D4FF00":"#555"}}>
-              {e}
-            </button>
-          ))}
-        </div>
-        {selEx&&exHist.length>0&&(
+      <div style={{padding:"24px 18px 0"}}>
+
+        {/* ── Overview ── */}
+        {tab==="overview"&&(
           <div>
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
-              <h3 style={{margin:0,fontSize:22,color:"#fff",fontFamily:"'DM Serif Display',serif",fontWeight:400}}>{selEx}</h3>
-              {exHist.length>=2&&exHist[exHist.length-1].weight>exHist[0].weight&&
-                <span style={{fontSize:12,color:"#D4FF00",background:"rgba(212,255,0,0.1)",padding:"3px 10px",borderRadius:20}}>↑ improving</span>}
+            {/* Big stats */}
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:10}}>
+              <GradientCard gradient="radial-gradient(ellipse at 30% 40%, #4a7a5a 0%, #1a3a28 55%, #000 100%)" height={120}>
+                <p style={{margin:"0 0 6px",fontSize:10,color:"rgba(255,255,255,0.4)",textTransform:"uppercase",letterSpacing:"0.1em"}}>total sessions</p>
+                <p style={{margin:0,fontSize:48,color:"#fff",fontFamily:"'DM Serif Display',serif",fontWeight:400,lineHeight:1}}>{totalSessions}</p>
+              </GradientCard>
+              <GradientCard gradient="radial-gradient(ellipse at 70% 30%, #5a6a8b 0%, #1a2a3a 55%, #000 100%)" height={120}>
+                <p style={{margin:"0 0 6px",fontSize:10,color:"rgba(255,255,255,0.4)",textTransform:"uppercase",letterSpacing:"0.1em"}}>this week</p>
+                <p style={{margin:0,fontSize:48,color:"#fff",fontFamily:"'DM Serif Display',serif",fontWeight:400,lineHeight:1}}>{weekSessions}</p>
+              </GradientCard>
             </div>
-            {/* Chart in dark green card */}
-            <div style={{background:"#0d1a0f",borderRadius:16,padding:"16px",marginBottom:16}}>
-              <div style={{display:"flex",alignItems:"flex-end",gap:4,height:80,marginBottom:6}}>
-                {exHist.slice(-10).map((h,i)=>{
-                  const isLast=i===exHist.slice(-10).length-1;
+
+            {/* Workout type breakdown */}
+            <div style={{background:"#0d1a0f",borderRadius:20,padding:"18px",marginBottom:10}}>
+              <p style={{margin:"0 0 16px",fontSize:10,color:"#3a6a3a",textTransform:"uppercase",letterSpacing:"0.1em"}}>✦ workout breakdown</p>
+              {WORKOUT_TYPES.map(t=>{
+                const count=typeCounts[t.id]||0;
+                if(!count)return null;
+                const pct=totalSessions>0?count/totalSessions*100:0;
+                return(
+                  <div key={t.id} style={{marginBottom:14}}>
+                    <div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}>
+                      <span style={{fontSize:13,color:"#a0c0a0"}}>{t.label}</span>
+                      <span style={{fontSize:12,color:"#4a6a4a"}}>{count}×</span>
+                    </div>
+                    <div style={{height:3,borderRadius:2,background:"#1a2a1a",overflow:"hidden"}}>
+                      <div style={{height:"100%",width:pct+"%",borderRadius:2,background:"#D4FF00"}}/>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Energy */}
+            {Object.keys(energyCounts).length>0&&(
+              <div style={{display:"flex",gap:10,marginBottom:10}}>
+                {[["low","🪫","radial-gradient(ellipse at 50% 30%, #5a6a8b 0%, #1a2030 70%, #000 100%)"],
+                  ["medium","⚡","radial-gradient(ellipse at 50% 30%, #8b7a3a 0%, #3a3010 70%, #000 100%)"],
+                  ["high","🔥","radial-gradient(ellipse at 50% 30%, #8b4a3a 0%, #3a1a10 70%, #000 100%)"]
+                ].filter(([k])=>energyCounts[k]).map(([key,icon,grad])=>(
+                  <GradientCard key={key} gradient={grad} height={100} style={{flex:1}}>
+                    <p style={{margin:"0 0 4px",fontSize:20}}>{icon}</p>
+                    <p style={{margin:"0 0 2px",fontSize:26,color:"#fff",fontFamily:"'DM Serif Display',serif",fontWeight:400,lineHeight:1}}>{energyCounts[key]||0}</p>
+                    <p style={{margin:0,fontSize:10,color:"rgba(255,255,255,0.4)",letterSpacing:"0.06em"}}>{key}</p>
+                  </GradientCard>
+                ))}
+              </div>
+            )}
+
+            {/* Illustration accent */}
+            <div style={{display:"flex",justifyContent:"center",padding:"20px 0 10px",opacity:0.15}}>
+              <IllustrationC color="#D4FF00" size={120}/>
+            </div>
+          </div>
+        )}
+
+        {/* ── Exercises ── */}
+        {tab==="exercises"&&(
+          <div>
+            {exNames.length===0&&<p style={{color:"#333",fontSize:16,fontStyle:"italic",fontFamily:"'DM Serif Display',serif"}}>log workouts to see exercise trends.</p>}
+            <div style={{display:"flex",flexWrap:"wrap",gap:7,marginBottom:20}}>
+              {exNames.map(e=>(
+                <button key={e} onClick={()=>setSelEx(selEx===e?null:e)}
+                  style={{padding:"6px 12px",borderRadius:40,fontSize:12,cursor:"pointer",fontFamily:"inherit",border:`1px solid ${selEx===e?"#D4FF00":"#1a1a1a"}`,background:selEx===e?"#D4FF0018":"transparent",color:selEx===e?"#D4FF00":"#555"}}>
+                  {e}
+                </button>
+              ))}
+            </div>
+            {selEx&&exHist.length>0&&(
+              <div>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+                  <h3 style={{margin:0,fontSize:22,color:"#fff",fontFamily:"'DM Serif Display',serif",fontWeight:400}}>{selEx}</h3>
+                  {exHist.length>=2&&exHist[exHist.length-1].weight>exHist[0].weight&&
+                    <span style={{fontSize:12,color:"#D4FF00",background:"rgba(212,255,0,0.1)",padding:"3px 10px",borderRadius:20}}>↑ improving</span>}
+                </div>
+                {/* Chart in dark green card */}
+                <div style={{background:"#0d1a0f",borderRadius:16,padding:"16px",marginBottom:16}}>
+                  <div style={{display:"flex",alignItems:"flex-end",gap:4,height:80,marginBottom:6}}>
+                    {exHist.slice(-10).map((h,i)=>{
+                      const isLast=i===exHist.slice(-10).length-1;
+                      return(
+                        <div key={i} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3}}>
+                          <span style={{fontSize:8,color:isLast?"#D4FF00":"#2a4a2a"}}>{h.weight}</span>
+                          <div style={{width:"100%",borderRadius:"3px 3px 0 0",minHeight:4,height:maxW>0?Math.max(4,h.weight/maxW*56)+"px":"4px",background:isLast?"#D4FF00":"#1a3a1a"}}/>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div style={{display:"flex",gap:4}}>
+                    {exHist.slice(-10).map((h,i)=><div key={i} style={{flex:1,textAlign:"center"}}><span style={{fontSize:8,color:"#1a3a1a"}}>{new Date(h.date+"T12:00:00").getDate()}</span></div>)}
+                  </div>
+                </div>
+                {exHist.slice().reverse().slice(0,8).map((h,i)=>(
+                  <div key={i} style={{display:"flex",justifyContent:"space-between",padding:"8px 0",borderBottom:"1px solid #0f0f0f"}}>
+                    <span style={{fontSize:13,color:"#555"}}>{fmtShort(h.date)}</span>
+                    <span style={{fontSize:13,color:"#ccc"}}>{h.weight>0?h.weight+"kg":"bw"} · {h.sets}×{h.reps}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── Body ── */}
+        {tab==="body"&&(
+          <div>
+            {bwSorted.length===0&&<p style={{color:"#333",fontSize:16,fontStyle:"italic",fontFamily:"'DM Serif Display',serif"}}>log body weight from the home screen.</p>}
+            {bwSorted.length>1&&(
+              <>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:16}}>
+                  <GradientCard gradient="radial-gradient(ellipse at 40% 40%, #6a5a8b 0%, #2a1a3a 55%, #000 100%)" height={120}>
+                    <p style={{margin:"0 0 6px",fontSize:10,color:"rgba(255,255,255,0.4)",textTransform:"uppercase",letterSpacing:"0.1em"}}>latest</p>
+                    <p style={{margin:0,fontSize:34,color:"#fff",fontFamily:"'DM Serif Display',serif",fontWeight:400,lineHeight:1}}>{bwSorted[bwSorted.length-1].weight}<span style={{fontSize:13,color:"rgba(255,255,255,0.35)"}}> kg</span></p>
+                  </GradientCard>
+                  {(()=>{const diff=+(bwSorted[bwSorted.length-1].weight-bwSorted[0].weight).toFixed(1);const isDown=diff<0;
                   return(
-                    <div key={i} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3}}>
-                      <span style={{fontSize:8,color:isLast?"#D4FF00":"#2a4a2a"}}>{h.weight}</span>
-                      <div style={{width:"100%",borderRadius:"3px 3px 0 0",minHeight:4,height:maxW>0?Math.max(4,h.weight/maxW*56)+"px":"4px",background:isLast?"#D4FF00":"#1a3a1a"}}/>
+                    <GradientCard gradient={isDown?"radial-gradient(ellipse at 40% 40%, #4a7a5a 0%, #1a3a28 55%, #000 100%)":"radial-gradient(ellipse at 40% 40%, #8b4a3a 0%, #3a1a10 55%, #000 100%)"} height={120}>
+                      <p style={{margin:"0 0 6px",fontSize:10,color:"rgba(255,255,255,0.4)",textTransform:"uppercase",letterSpacing:"0.1em"}}>change</p>
+                      <p style={{margin:0,fontSize:34,color:"#fff",fontFamily:"'DM Serif Display',serif",fontWeight:400,lineHeight:1}}>{diff>0?"+":""}{diff}<span style={{fontSize:13,color:"rgba(255,255,255,0.35)"}}> kg</span></p>
+                    </GradientCard>
+                  );})()}
+                </div>
+                <div style={{background:"#0d1a0f",borderRadius:16,padding:"16px",marginBottom:16}}>
+                  <div style={{display:"flex",alignItems:"flex-end",gap:4,height:80,marginBottom:4}}>
+                    {bwSorted.map((b,i)=>{
+                      const range=maxBW-minBW||1;
+                      const h=Math.max(8,((b.weight-minBW)/range)*60+8);
+                      const isLast=i===bwSorted.length-1;
+                      return(
+                        <div key={i} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3}}>
+                          <span style={{fontSize:8,color:isLast?"#D4FF00":"#2a4a2a"}}>{b.weight}</span>
+                          <div style={{width:"100%",height:h,borderRadius:"3px 3px 0 0",background:isLast?"#D4FF00":"#1a3a1a"}}/>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </>
+            )}
+            {bwSorted.slice().reverse().map((b,i)=>(
+              <div key={i} style={{display:"flex",justifyContent:"space-between",padding:"8px 0",borderBottom:"1px solid #0f0f0f"}}>
+                <span style={{fontSize:13,color:"#555"}}>{fmtDate(b.date)}</span>
+                <span style={{fontSize:13,color:"#ccc"}}>{b.weight} kg</span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* ── Calories ── */}
+        {tab==="calories"&&(
+          <div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:16}}>
+              <GradientCard gradient="radial-gradient(ellipse at 40% 40%, #8b6a3a 0%, #3a2a18 55%, #000 100%)" height={120}>
+                <p style={{margin:"0 0 6px",fontSize:10,color:"rgba(255,255,255,0.4)",textTransform:"uppercase",letterSpacing:"0.1em"}}>14-day avg</p>
+                <p style={{margin:0,fontSize:30,color:"#fff",fontFamily:"'DM Serif Display',serif",fontWeight:400,lineHeight:1}}>{calAvg||"—"}<span style={{fontSize:11,color:"rgba(255,255,255,0.35)"}}>{calAvg?" kcal":""}</span></p>
+              </GradientCard>
+              <GradientCard gradient="radial-gradient(ellipse at 60% 40%, #6a8b5a 0%, #2a3a18 55%, #000 100%)" height={120}>
+                <p style={{margin:"0 0 6px",fontSize:10,color:"rgba(255,255,255,0.4)",textTransform:"uppercase",letterSpacing:"0.1em"}}>target</p>
+                <p style={{margin:0,fontSize:30,color:"#fff",fontFamily:"'DM Serif Display',serif",fontWeight:400,lineHeight:1}}>{CAL_TARGET}<span style={{fontSize:11,color:"rgba(255,255,255,0.35)"}}> kcal</span></p>
+              </GradientCard>
+            </div>
+            <div style={{background:"#0d1a0f",borderRadius:16,padding:"16px",marginBottom:16}}>
+              <p style={{margin:"0 0 14px",fontSize:10,color:"#3a6a3a",textTransform:"uppercase",letterSpacing:"0.1em"}}>last 14 days</p>
+              <div style={{display:"flex",alignItems:"flex-end",gap:3,height:80,marginBottom:4}}>
+                {last14.map((d,i)=>{
+                  const tH=CAL_TARGET/maxCal*70;
+                  return(
+                    <div key={i} style={{flex:1,position:"relative",height:80,display:"flex",alignItems:"flex-end"}}>
+                      {d.cal>0
+                        ?<div style={{width:"100%",borderRadius:"3px 3px 0 0",height:Math.max(3,d.cal/maxCal*70),background:d.cal>=CAL_TARGET?"#D4FF00":"#3a5a3a"}}/>
+                        :<div style={{width:"100%",height:3,background:"#1a2a1a"}}/>}
+                      <div style={{position:"absolute",bottom:tH,left:0,right:0,borderTop:"1px dashed rgba(212,255,0,0.2)",pointerEvents:"none"}}/>
                     </div>
                   );
                 })}
               </div>
-              <div style={{display:"flex",gap:4}}>
-                {exHist.slice(-10).map((h,i)=><div key={i} style={{flex:1,textAlign:"center"}}><span style={{fontSize:8,color:"#1a3a1a"}}>{new Date(h.date+"T12:00:00").getDate()}</span></div>)}
+              <div style={{display:"flex",gap:3}}>
+                {last14.map((d,i)=><div key={i} style={{flex:1,textAlign:"center"}}><span style={{fontSize:7,color:"#1a3a1a"}}>{new Date(d.date+"T12:00:00").getDate()}</span></div>)}
               </div>
             </div>
-            {exHist.slice().reverse().slice(0,8).map((h,i)=>(
+            {last14.filter(d=>d.cal>0).reverse().map((d,i)=>(
               <div key={i} style={{display:"flex",justifyContent:"space-between",padding:"8px 0",borderBottom:"1px solid #0f0f0f"}}>
-                <span style={{fontSize:13,color:"#555"}}>{fmtShort(h.date)}</span>
-                <span style={{fontSize:13,color:"#ccc"}}>{h.weight>0?h.weight+"kg":"bw"} · {h.sets}×{h.reps}</span>
+                <span style={{fontSize:13,color:"#555"}}>{fmtShort(d.date)}</span>
+                <span style={{fontSize:13,color:d.cal>=CAL_TARGET?"#D4FF00":"#888"}}>{d.cal} kcal</span>
               </div>
             ))}
           </div>
         )}
       </div>
-    )}
-
-    {/* ── Body ── */}
-    {tab==="body"&&(
-      <div>
-        {bwSorted.length===0&&<p style={{color:"#333",fontSize:16,fontStyle:"italic",fontFamily:"'DM Serif Display',serif"}}>log body weight from the home screen.</p>}
-        {bwSorted.length>1&&(
-          <>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:16}}>
-              <GradientCard gradient="radial-gradient(ellipse at 40% 40%, #6a5a8b 0%, #2a1a3a 55%, #000 100%)" height={120}>
-                <p style={{margin:"0 0 6px",fontSize:10,color:"rgba(255,255,255,0.4)",textTransform:"uppercase",letterSpacing:"0.1em"}}>latest</p>
-                <p style={{margin:0,fontSize:34,color:"#fff",fontFamily:"'DM Serif Display',serif",fontWeight:400,lineHeight:1}}>{bwSorted[bwSorted.length-1].weight}<span style={{fontSize:13,color:"rgba(255,255,255,0.35)"}}> kg</span></p>
-              </GradientCard>
-              {(()=>{const diff=+(bwSorted[bwSorted.length-1].weight-bwSorted[0].weight).toFixed(1);const isDown=diff<0;
-              return(
-                <GradientCard gradient={isDown?"radial-gradient(ellipse at 40% 40%, #4a7a5a 0%, #1a3a28 55%, #000 100%)":"radial-gradient(ellipse at 40% 40%, #8b4a3a 0%, #3a1a10 55%, #000 100%)"} height={120}>
-                  <p style={{margin:"0 0 6px",fontSize:10,color:"rgba(255,255,255,0.4)",textTransform:"uppercase",letterSpacing:"0.1em"}}>change</p>
-                  <p style={{margin:0,fontSize:34,color:"#fff",fontFamily:"'DM Serif Display',serif",fontWeight:400,lineHeight:1}}>{diff>0?"+":""}{diff}<span style={{fontSize:13,color:"rgba(255,255,255,0.35)"}}> kg</span></p>
-                </GradientCard>
-              );})()}
-            </div>
-            <div style={{background:"#0d1a0f",borderRadius:16,padding:"16px",marginBottom:16}}>
-              <div style={{display:"flex",alignItems:"flex-end",gap:4,height:80,marginBottom:4}}>
-                {bwSorted.map((b,i)=>{
-                  const range=maxBW-minBW||1;
-                  const h=Math.max(8,((b.weight-minBW)/range)*60+8);
-                  const isLast=i===bwSorted.length-1;
-                  return(
-                    <div key={i} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3}}>
-                      <span style={{fontSize:8,color:isLast?"#D4FF00":"#2a4a2a"}}>{b.weight}</span>
-                      <div style={{width:"100%",height:h,borderRadius:"3px 3px 0 0",background:isLast?"#D4FF00":"#1a3a1a"}}/>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </>
-        )}
-        {bwSorted.slice().reverse().map((b,i)=>(
-          <div key={i} style={{display:"flex",justifyContent:"space-between",padding:"8px 0",borderBottom:"1px solid #0f0f0f"}}>
-            <span style={{fontSize:13,color:"#555"}}>{fmtDate(b.date)}</span>
-            <span style={{fontSize:13,color:"#ccc"}}>{b.weight} kg</span>
-          </div>
-        ))}
-      </div>
-    )}
-
-    {/* ── Calories ── */}
-    {tab==="calories"&&(
-      <div>
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:16}}>
-          <GradientCard gradient="radial-gradient(ellipse at 40% 40%, #8b6a3a 0%, #3a2a18 55%, #000 100%)" height={120}>
-            <p style={{margin:"0 0 6px",fontSize:10,color:"rgba(255,255,255,0.4)",textTransform:"uppercase",letterSpacing:"0.1em"}}>14-day avg</p>
-            <p style={{margin:0,fontSize:30,color:"#fff",fontFamily:"'DM Serif Display',serif",fontWeight:400,lineHeight:1}}>{calAvg||"—"}<span style={{fontSize:11,color:"rgba(255,255,255,0.35)"}}>{calAvg?" kcal":""}</span></p>
-          </GradientCard>
-          <GradientCard gradient="radial-gradient(ellipse at 60% 40%, #6a8b5a 0%, #2a3a18 55%, #000 100%)" height={120}>
-            <p style={{margin:"0 0 6px",fontSize:10,color:"rgba(255,255,255,0.4)",textTransform:"uppercase",letterSpacing:"0.1em"}}>target</p>
-            <p style={{margin:0,fontSize:30,color:"#fff",fontFamily:"'DM Serif Display',serif",fontWeight:400,lineHeight:1}}>{CAL_TARGET}<span style={{fontSize:11,color:"rgba(255,255,255,0.35)"}}> kcal</span></p>
-          </GradientCard>
-        </div>
-        <div style={{background:"#0d1a0f",borderRadius:16,padding:"16px",marginBottom:16}}>
-          <p style={{margin:"0 0 14px",fontSize:10,color:"#3a6a3a",textTransform:"uppercase",letterSpacing:"0.1em"}}>last 14 days</p>
-          <div style={{display:"flex",alignItems:"flex-end",gap:3,height:80,marginBottom:4}}>
-            {last14.map((d,i)=>{
-              const tH=CAL_TARGET/maxCal*70;
-              return(
-                <div key={i} style={{flex:1,position:"relative",height:80,display:"flex",alignItems:"flex-end"}}>
-                  {d.cal>0
-                    ?<div style={{width:"100%",borderRadius:"3px 3px 0 0",height:Math.max(3,d.cal/maxCal*70),background:d.cal>=CAL_TARGET?"#D4FF00":"#3a5a3a"}}/>
-                    :<div style={{width:"100%",height:3,background:"#1a2a1a"}}/>}
-                  <div style={{position:"absolute",bottom:tH,left:0,right:0,borderTop:"1px dashed rgba(212,255,0,0.2)",pointerEvents:"none"}}/>
-                </div>
-              );
-            })}
-          </div>
-          <div style={{display:"flex",gap:3}}>
-            {last14.map((d,i)=><div key={i} style={{flex:1,textAlign:"center"}}><span style={{fontSize:7,color:"#1a3a1a"}}>{new Date(d.date+"T12:00:00").getDate()}</span></div>)}
-          </div>
-        </div>
-        {last14.filter(d=>d.cal>0).reverse().map((d,i)=>(
-          <div key={i} style={{display:"flex",justifyContent:"space-between",padding:"8px 0",borderBottom:"1px solid #0f0f0f"}}>
-            <span style={{fontSize:13,color:"#555"}}>{fmtShort(d.date)}</span>
-            <span style={{fontSize:13,color:d.cal>=CAL_TARGET?"#D4FF00":"#888"}}>{d.cal} kcal</span>
-          </div>
-        ))}
-      </div>
-    )}
-  </div>
-</div>
-```
-
-);
+    </div>
+  );
 }
 
 // ─── Sheets ─────────────────────────────────────────────────────────────────────
 
 function Sheet({title,gradient,illus,children,onClose}){
-return(
-<div style={{position:“fixed”,inset:0,background:“rgba(0,0,0,0.88)”,zIndex:100,display:“flex”,alignItems:“flex-end”}} onClick={e=>e.target===e.currentTarget&&onClose()}>
-<div style={{width:“100%”,maxWidth:420,margin:“0 auto”,background:”#050505”,borderRadius:“24px 24px 0 0”,overflow:“hidden”}}>
-{/* Gradient header */}
-<div style={{background:gradient,padding:“24px 20px 20px”,position:“relative”,overflow:“hidden”}}>
-{illus&&<div style={{position:“absolute”,right:-20,top:-20,opacity:0.3}}>{illus}</div>}
-<div style={{position:“relative”,zIndex:1,display:“flex”,justifyContent:“space-between”,alignItems:“flex-start”}}>
-<p style={{margin:0,fontSize:24,color:”#fff”,fontFamily:”‘DM Serif Display’,serif”,fontWeight:400}}>{title}</p>
-<button onClick={onClose} style={{background:“rgba(0,0,0,0.3)”,border:“none”,borderRadius:“50%”,color:”#fff”,cursor:“pointer”,fontSize:16,width:30,height:30,display:“flex”,alignItems:“center”,justifyContent:“center”,fontFamily:“inherit”}}>×</button>
-</div>
-</div>
-<div style={{padding:“22px 20px 44px”}}>{children}</div>
-</div>
-</div>
-);
+  return(
+    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.88)",zIndex:100,display:"flex",alignItems:"flex-end"}} onClick={e=>e.target===e.currentTarget&&onClose()}>
+      <div style={{width:"100%",maxWidth:420,margin:"0 auto",background:"#050505",borderRadius:"24px 24px 0 0",overflow:"hidden"}}>
+        {/* Gradient header */}
+        <div style={{background:gradient,padding:"24px 20px 20px",position:"relative",overflow:"hidden"}}>
+          {illus&&<div style={{position:"absolute",right:-20,top:-20,opacity:0.3}}>{illus}</div>}
+          <div style={{position:"relative",zIndex:1,display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
+            <p style={{margin:0,fontSize:24,color:"#fff",fontFamily:"'DM Serif Display',serif",fontWeight:400}}>{title}</p>
+            <button onClick={onClose} style={{background:"rgba(0,0,0,0.3)",border:"none",borderRadius:"50%",color:"#fff",cursor:"pointer",fontSize:16,width:30,height:30,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"inherit"}}>×</button>
+          </div>
+        </div>
+        <div style={{padding:"22px 20px 44px"}}>{children}</div>
+      </div>
+    </div>
+  );
 }
 
 function WeightSheet({latest,onSave,onClose}){
-const [val,setVal]=useState(latest?String(latest.weight):””);
-return(
-<Sheet title=“log body weight” gradient=“radial-gradient(ellipse at 40% 60%, #5a6a8b 0%, #1a2a3a 60%, #000 100%)” illus={<IllustrationB color="#D4FF00" size={100}/>} onClose={onClose}>
-<div style={{display:“flex”,gap:12,alignItems:“center”,marginBottom:20}}>
-<input value={val} onChange={e=>setVal(e.target.value)} placeholder=“62.5” inputMode=“decimal” autoFocus
-style={{flex:1,background:”#0d0d0d”,border:“1px solid #1a1a1a”,borderRadius:14,padding:“16px”,color:”#fff”,fontSize:32,textAlign:“center”,outline:“none”,fontFamily:”‘DM Serif Display’,serif”}}/>
-<span style={{color:”#555”,fontSize:16,fontFamily:“inherit”}}>kg</span>
-</div>
-<button onClick={()=>{const n=parseFloat(val);if(!isNaN(n)&&n>0)onSave(n);}}
-style={{width:“100%”,padding:“15px”,borderRadius:50,background:”#D4FF00”,border:“none”,color:”#000”,fontSize:15,fontWeight:700,cursor:“pointer”,fontFamily:“inherit”}}>
-save
-</button>
-</Sheet>
-);
+  const [val,setVal]=useState(latest?String(latest.weight):"");
+  return(
+    <Sheet title="log body weight" gradient="radial-gradient(ellipse at 40% 60%, #5a6a8b 0%, #1a2a3a 60%, #000 100%)" illus={<IllustrationB color="#D4FF00" size={100}/>} onClose={onClose}>
+      <div style={{display:"flex",gap:12,alignItems:"center",marginBottom:20}}>
+        <input value={val} onChange={e=>setVal(e.target.value)} placeholder="62.5" inputMode="decimal" autoFocus
+          style={{flex:1,background:"#0d0d0d",border:"1px solid #1a1a1a",borderRadius:14,padding:"16px",color:"#fff",fontSize:32,textAlign:"center",outline:"none",fontFamily:"'DM Serif Display',serif"}}/>
+        <span style={{color:"#555",fontSize:16,fontFamily:"inherit"}}>kg</span>
+      </div>
+      <button onClick={()=>{const n=parseFloat(val);if(!isNaN(n)&&n>0)onSave(n);}}
+        style={{width:"100%",padding:"15px",borderRadius:50,background:"#D4FF00",border:"none",color:"#000",fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
+        save
+      </button>
+    </Sheet>
+  );
 }
 
 function CalSheet({current,onSave,onClose}){
-const [val,setVal]=useState(current?String(current):””);
-return(
-<Sheet title=“log calories today” gradient=“radial-gradient(ellipse at 60% 30%, #8b6a3a 0%, #3a2a18 60%, #000 100%)” illus={<IllustrationC color="#D4FF00" size={100}/>} onClose={onClose}>
-<p style={{margin:“0 0 14px”,fontSize:12,color:”#555”,fontFamily:“inherit”}}>target: {CAL_TARGET} kcal / day</p>
-<div style={{display:“flex”,gap:12,alignItems:“center”,marginBottom:20}}>
-<input value={val} onChange={e=>setVal(e.target.value)} placeholder={String(CAL_TARGET)} inputMode=“numeric” autoFocus
-style={{flex:1,background:”#0d0d0d”,border:“1px solid #1a1a1a”,borderRadius:14,padding:“16px”,color:”#fff”,fontSize:32,textAlign:“center”,outline:“none”,fontFamily:”‘DM Serif Display’,serif”}}/>
-<span style={{color:”#555”,fontSize:14,fontFamily:“inherit”}}>kcal</span>
-</div>
-<button onClick={()=>{const n=parseInt(val);if(!isNaN(n)&&n>0)onSave(n);}}
-style={{width:“100%”,padding:“15px”,borderRadius:50,background:”#D4FF00”,border:“none”,color:”#000”,fontSize:15,fontWeight:700,cursor:“pointer”,fontFamily:“inherit”}}>
-save
-</button>
-</Sheet>
-);
+  const [val,setVal]=useState(current?String(current):"");
+  return(
+    <Sheet title="log calories today" gradient="radial-gradient(ellipse at 60% 30%, #8b6a3a 0%, #3a2a18 60%, #000 100%)" illus={<IllustrationC color="#D4FF00" size={100}/>} onClose={onClose}>
+      <p style={{margin:"0 0 14px",fontSize:12,color:"#555",fontFamily:"inherit"}}>target: {CAL_TARGET} kcal / day</p>
+      <div style={{display:"flex",gap:12,alignItems:"center",marginBottom:20}}>
+        <input value={val} onChange={e=>setVal(e.target.value)} placeholder={String(CAL_TARGET)} inputMode="numeric" autoFocus
+          style={{flex:1,background:"#0d0d0d",border:"1px solid #1a1a1a",borderRadius:14,padding:"16px",color:"#fff",fontSize:32,textAlign:"center",outline:"none",fontFamily:"'DM Serif Display',serif"}}/>
+        <span style={{color:"#555",fontSize:14,fontFamily:"inherit"}}>kcal</span>
+      </div>
+      <button onClick={()=>{const n=parseInt(val);if(!isNaN(n)&&n>0)onSave(n);}}
+        style={{width:"100%",padding:"15px",borderRadius:50,background:"#D4FF00",border:"none",color:"#000",fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
+        save
+      </button>
+    </Sheet>
+  );
 }
 
 // ─── Swipeable screen wrapper ────────────────────────────────────────────────────
 
 function SwipeScreen({ onSwipeBack, children }) {
-const touchStartX = useRef(null);
-const touchStartY = useRef(null);
+  const touchStartX = useRef(null);
+  const touchStartY = useRef(null);
 
-const onTouchStart = e => {
-touchStartX.current = e.touches[0].clientX;
-touchStartY.current = e.touches[0].clientY;
-};
+  const onTouchStart = e => {
+    touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
+  };
 
-const onTouchEnd = e => {
-if (touchStartX.current === null) return;
-const dx = e.changedTouches[0].clientX - touchStartX.current;
-const dy = Math.abs(e.changedTouches[0].clientY - touchStartY.current);
-// Swipe right > 60px, more horizontal than vertical, started from left edge (< 40px)
-if (dx > 60 && dy < 80 && touchStartX.current < 40 && onSwipeBack) {
-onSwipeBack();
-}
-touchStartX.current = null;
-touchStartY.current = null;
-};
+  const onTouchEnd = e => {
+    if (touchStartX.current === null) return;
+    const dx = e.changedTouches[0].clientX - touchStartX.current;
+    const dy = Math.abs(e.changedTouches[0].clientY - touchStartY.current);
+    // Swipe right > 60px, more horizontal than vertical, started from left edge (< 40px)
+    if (dx > 60 && dy < 80 && touchStartX.current < 40 && onSwipeBack) {
+      onSwipeBack();
+    }
+    touchStartX.current = null;
+    touchStartY.current = null;
+  };
 
-return (
-<div
-onTouchStart={onTouchStart}
-onTouchEnd={onTouchEnd}
-style={{ minHeight: “100%”, paddingBottom: 80 }}
->
-{children}
-</div>
-);
+  return (
+    <div
+      onTouchStart={onTouchStart}
+      onTouchEnd={onTouchEnd}
+      style={{ minHeight: "100%", paddingBottom: 80 }}
+    >
+      {children}
+    </div>
+  );
 }
 
 // ─── App ────────────────────────────────────────────────────────────────────────
 
 function App(){
-const [workouts,setWorkouts]=useState(loadW);
-const [bodyWeights,setBodyWeights]=useState(loadBW);
-const [calories,setCalories]=useState(loadCal);
-const [customEx,setCustomEx]=useState(loadEx);
-const [view,setView]=useState(“home”);
-const [logTypeId,setLogTypeId]=useState(null);
-const [editingW,setEditingW]=useState(null);
-const [modal,setModal]=useState(null);
+  const [workouts,setWorkouts]=useState(loadW);
+  const [bodyWeights,setBodyWeights]=useState(loadBW);
+  const [calories,setCalories]=useState(loadCal);
+  const [customEx,setCustomEx]=useState(loadEx);
+  const [view,setView]=useState("home");
+  const [logTypeId,setLogTypeId]=useState(null);
+  const [editingW,setEditingW]=useState(null);
+  const [modal,setModal]=useState(null);
 
-useEffect(()=>S.set(“ftv5_w”,workouts),[workouts]);
-useEffect(()=>S.set(“ftv5_bw”,bodyWeights),[bodyWeights]);
-useEffect(()=>S.set(“ftv5_cal”,calories),[calories]);
-useEffect(()=>S.set(“ftv5_ex”,customEx),[customEx]);
+  useEffect(()=>S.set("ftv5_w",workouts),[workouts]);
+  useEffect(()=>S.set("ftv5_bw",bodyWeights),[bodyWeights]);
+  useEffect(()=>S.set("ftv5_cal",calories),[calories]);
+  useEffect(()=>S.set("ftv5_ex",customEx),[customEx]);
 
-const handleSave=useCallback((workout,newNames)=>{
-setWorkouts(prev=>{const ex=prev.find(w=>w.id===workout.id);return ex?prev.map(w=>w.id===workout.id?workout:w):[…prev,workout];});
-if(newNames?.length)setCustomEx(prev=>{const up={…prev};up[workout.typeId]=[…new Set([…(up[workout.typeId]||[]),…newNames])];return up;});
-setEditingW(null);setView(“home”);
-},[]);
+  const handleSave=useCallback((workout,newNames)=>{
+    setWorkouts(prev=>{const ex=prev.find(w=>w.id===workout.id);return ex?prev.map(w=>w.id===workout.id?workout:w):[...prev,workout];});
+    if(newNames?.length)setCustomEx(prev=>{const up={...prev};up[workout.typeId]=[...new Set([...(up[workout.typeId]||[]),...newNames])];return up;});
+    setEditingW(null);setView("home");
+  },[]);
 
-const handleEdit=w=>{setEditingW(w);setLogTypeId(w.typeId);setView(“log”);};
-const handleDelete=id=>setWorkouts(prev=>prev.filter(w=>w.id!==id));
-const goBack = ()=>setView(editingW?“log_list”:“home”);
+  const handleEdit=w=>{setEditingW(w);setLogTypeId(w.typeId);setView("log");};
+  const handleDelete=id=>setWorkouts(prev=>prev.filter(w=>w.id!==id));
+  const goBack = ()=>setView(editingW?"log_list":"home");
 
-const NAV=[{id:“home”,label:“today”},{id:“log_list”,label:“log”},{id:“progress”,label:“progress”}];
-const isSubView = view===“log”;
+  const NAV=[{id:"home",label:"today"},{id:"log_list",label:"log"},{id:"progress",label:"progress"}];
+  const isSubView = view==="log";
 
-return(
-<>
-<style>{`@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap'); *{box-sizing:border-box;margin:0;padding:0;} html,body{background:#000;min-height:100vh;} input{outline:none;} input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(0.3);} ::-webkit-scrollbar{width:0;} button{font-family:'DM Sans',sans-serif;}`}</style>
+  return(
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap');
+        *{box-sizing:border-box;margin:0;padding:0;}
+        html,body{background:#000;min-height:100vh;}
+        input{outline:none;}
+        input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(0.3);}
+        ::-webkit-scrollbar{width:0;}
+        button{font-family:'DM Sans',sans-serif;}
+      `}</style>
 
 ```
   <div style={{
@@ -994,7 +994,10 @@ return(
 );
 }
 
-ReactDOM.createRoot(document.getElementById(“root”)).render(<App/>);
+const container = document.getElementById(“root”);
+const root = ReactDOM.createRoot(container);
+root.render(React.createElement(App));
+document.getElementById(“loading”).style.display = “none”;
 </script>
 
 </body>
